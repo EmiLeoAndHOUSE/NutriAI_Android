@@ -1,0 +1,679 @@
+package com.nutriai.app.ui.onboarding
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.nutriai.app.data.model.ActivityLevel
+import com.nutriai.app.data.model.DietGoal
+import com.nutriai.app.data.model.DietaryType
+import com.nutriai.app.data.model.Gender
+import com.nutriai.app.data.model.MealType
+import com.nutriai.app.data.model.UserProfile
+import com.nutriai.app.ui.theme.EmeraldGreen
+
+@Composable
+fun OnboardingScreen(
+    initialProfile: UserProfile,
+    onComplete: (UserProfile) -> Unit
+) {
+    var currentStep by remember { mutableIntStateOf(1) }
+    var profile by remember { mutableStateOf(initialProfile) }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+        ) {
+            // Header Progress
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (currentStep > 1) {
+                    IconButton(onClick = { currentStep-- }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Indietro",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Passo $currentStep di 4",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(48.dp))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { currentStep / 4f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(CircleShape),
+                color = EmeraldGreen,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Step Content
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                AnimatedContent(
+                    targetState = currentStep,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "StepTransition"
+                ) { step ->
+                    when (step) {
+                        1 -> StepPhysicalData(profile = profile, onProfileChange = { profile = it })
+                        2 -> StepDietaryTypeAndAllergies(profile = profile, onProfileChange = { profile = it })
+                        3 -> StepFoodPreferences(profile = profile, onProfileChange = { profile = it })
+                        4 -> StepMealSlots(profile = profile, onProfileChange = { profile = it })
+                    }
+                }
+            }
+
+            // Bottom Navigation Button
+            Button(
+                onClick = {
+                    if (currentStep < 4) {
+                        currentStep++
+                    } else {
+                        onComplete(profile)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (currentStep == 4) "Genera la mia Dieta con AI" else "Continua",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = if (currentStep == 4) Icons.Default.Check else Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepPhysicalData(
+    profile: UserProfile,
+    onProfileChange: (UserProfile) -> Unit
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+    ) {
+        Text(
+            text = "Dati Fisici & Obiettivo 🎯",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Inserisci i tuoi parametri per calcolare il fabbisogno calorico preciso.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Sesso
+        Text("Sesso", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Gender.values().forEach { gender ->
+                val selected = profile.gender == gender
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onProfileChange(profile.copy(gender = gender)) }
+                        .border(
+                            width = if (selected) 2.dp else 1.dp,
+                            color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (selected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Box(modifier = Modifier.padding(16.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = gender.label,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Input numerici
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = profile.age.toString(),
+                onValueChange = { onProfileChange(profile.copy(age = it.toIntOrNull() ?: profile.age)) },
+                label = { Text("Età") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            OutlinedTextField(
+                value = profile.heightCm.toInt().toString(),
+                onValueChange = { onProfileChange(profile.copy(heightCm = it.toDoubleOrNull() ?: profile.heightCm)) },
+                label = { Text("Altezza (cm)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = profile.currentWeightKg.toString(),
+                onValueChange = { onProfileChange(profile.copy(currentWeightKg = it.toDoubleOrNull() ?: profile.currentWeightKg)) },
+                label = { Text("Peso Attuale (kg)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            OutlinedTextField(
+                value = profile.targetWeightKg.toString(),
+                onValueChange = { onProfileChange(profile.copy(targetWeightKg = it.toDoubleOrNull() ?: profile.targetWeightKg)) },
+                label = { Text("Peso Ideale (kg)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Obiettivo
+        Text("Il tuo Obiettivo", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        DietGoal.values().forEach { goal ->
+            val selected = profile.goal == goal
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onProfileChange(profile.copy(goal = goal)) }
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = goal.label,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (selected) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = EmeraldGreen)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Attività
+        Text("Stile di Vita & Attività", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        ActivityLevel.values().forEach { act ->
+            val selected = profile.activityLevel == act
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onProfileChange(profile.copy(activityLevel = act)) }
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = act.label,
+                        fontWeight = FontWeight.Bold,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = act.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StepDietaryTypeAndAllergies(
+    profile: UserProfile,
+    onProfileChange: (UserProfile) -> Unit
+) {
+    val commonAllergies = remember { listOf("Lattosio", "Glutine", "Frutta a guscio", "Nichel", "Uova", "Crostacei", "Soia") }
+    var customAllergy by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "Regime & Intolleranze 🥗",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Seleziona eventuali restrizioni o allergie da escludere dai pasti.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text("Stile Alimentare", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        DietaryType.values().forEach { diet ->
+            val selected = profile.dietaryType == diet
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onProfileChange(profile.copy(dietaryType = diet)) }
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = diet.label,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (selected) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = EmeraldGreen)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Allergie o Intolleranze", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            commonAllergies.forEach { allergy ->
+                val selected = profile.allergies.contains(allergy)
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        val newAllergies = if (selected) {
+                            profile.allergies - allergy
+                        } else {
+                            profile.allergies + allergy
+                        }
+                        onProfileChange(profile.copy(allergies = newAllergies))
+                    },
+                    label = { Text(allergy) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldGreen,
+                        selectedLabelColor = Color.White
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = customAllergy,
+                onValueChange = { customAllergy = it },
+                label = { Text("Aggiungi altra intolleranza...") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    if (customAllergy.isNotBlank() && !profile.allergies.contains(customAllergy.trim())) {
+                        onProfileChange(profile.copy(allergies = profile.allergies + customAllergy.trim()))
+                        customAllergy = ""
+                    }
+                },
+                modifier = Modifier
+                    .background(EmeraldGreen, CircleShape)
+                    .padding(4.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi", tint = Color.White)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StepFoodPreferences(
+    profile: UserProfile,
+    onProfileChange: (UserProfile) -> Unit
+) {
+    var newLiked by remember { mutableStateOf("") }
+    var newDisliked by remember { mutableStateOf("") }
+
+    val presetLiked = remember { listOf("Salmone", "Avocado", "Avena", "Yogurt Greco", "Riso Venere", "Uova", "Petto di Pollo", "Cioccolato Fondente") }
+    val presetDisliked = remember { listOf("Fegato", "Cavoletti di Bruxelles", "Melanzane", "Cipolla cruda", "Pesce spada") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "I tuoi Cibi Preferiti ❤️",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Indica gli alimenti che ami mangiare ed eventuali cibi che proprio non ti piacciono.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text("Cibi Graditi (da privilegiare)", fontWeight = FontWeight.Bold, color = EmeraldGreen)
+        Spacer(modifier = Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            presetLiked.forEach { food ->
+                val selected = profile.likedFoods.contains(food)
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        val newCollection = if (selected) profile.likedFoods - food else profile.likedFoods + food
+                        onProfileChange(profile.copy(likedFoods = newCollection))
+                    },
+                    label = { Text(food) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldGreen,
+                        selectedLabelColor = Color.White
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = newLiked,
+                onValueChange = { newLiked = it },
+                label = { Text("Aggiungi cibo preferito...") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    if (newLiked.isNotBlank()) {
+                        onProfileChange(profile.copy(likedFoods = profile.likedFoods + newLiked.trim()))
+                        newLiked = ""
+                    }
+                },
+                modifier = Modifier
+                    .background(EmeraldGreen, CircleShape)
+                    .padding(4.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi", tint = Color.White)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Cibi Sgraditi (da evitare)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            presetDisliked.forEach { food ->
+                val selected = profile.dislikedFoods.contains(food)
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        val newCollection = if (selected) profile.dislikedFoods - food else profile.dislikedFoods + food
+                        onProfileChange(profile.copy(dislikedFoods = newCollection))
+                    },
+                    label = { Text(food) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.error,
+                        selectedLabelColor = Color.White
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = newDisliked,
+                onValueChange = { newDisliked = it },
+                label = { Text("Aggiungi cibo sgradito...") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    if (newDisliked.isNotBlank()) {
+                        onProfileChange(profile.copy(dislikedFoods = profile.dislikedFoods + newDisliked.trim()))
+                        newDisliked = ""
+                    }
+                },
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.error, CircleShape)
+                    .padding(4.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi", tint = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepMealSlots(
+    profile: UserProfile,
+    onProfileChange: (UserProfile) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "Struttura della Giornata 🕒",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Scegli quali pasti vuoi includere nel tuo programma giornaliero.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        MealType.values().forEach { mealType ->
+            val selected = profile.activeMealTypes.contains(mealType)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        val newSlots = if (selected) {
+                            if (profile.activeMealTypes.size > 1) profile.activeMealTypes - mealType else profile.activeMealTypes
+                        } else {
+                            profile.activeMealTypes + mealType
+                        }
+                        onProfileChange(profile.copy(activeMealTypes = newSlots))
+                    }
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = mealType.label,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (selected) EmeraldGreen else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (selected) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = EmeraldGreen)
+                    }
+                }
+            }
+        }
+    }
+}
