@@ -58,10 +58,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+
 import androidx.compose.ui.unit.sp
 import com.nutriai.app.data.model.ActivityLevel
 import com.nutriai.app.data.model.DietGoal
@@ -243,23 +247,62 @@ private fun StepPhysicalData(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Input numerici
+        // Input numerici con selezione automatica del testo al tocco per sovrascrittura immediata
+        var ageValue by remember(profile.age) {
+            mutableStateOf(TextFieldValue(text = if (profile.age > 0) profile.age.toString() else ""))
+        }
+        var heightValue by remember(profile.heightCm) {
+            mutableStateOf(TextFieldValue(text = if (profile.heightCm > 0) profile.heightCm.toInt().toString() else ""))
+        }
+        var currentWeightValue by remember(profile.currentWeightKg) {
+            mutableStateOf(TextFieldValue(text = if (profile.currentWeightKg > 0) profile.currentWeightKg.toString() else ""))
+        }
+        var targetWeightValue by remember(profile.targetWeightKg) {
+            mutableStateOf(TextFieldValue(text = if (profile.targetWeightKg > 0) profile.targetWeightKg.toString() else ""))
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
-                value = profile.age.toString(),
-                onValueChange = { onProfileChange(profile.copy(age = it.toIntOrNull() ?: profile.age)) },
+                value = ageValue,
+                onValueChange = { newValue ->
+                    ageValue = newValue
+                    val parsed = newValue.text.toIntOrNull()
+                    if (parsed != null && parsed in 1..120) {
+                        onProfileChange(profile.copy(age = parsed))
+                    }
+                },
                 label = { Text("Età") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && ageValue.text.isNotEmpty()) {
+                            ageValue = ageValue.copy(selection = TextRange(0, ageValue.text.length))
+                        }
+                    },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
             OutlinedTextField(
-                value = profile.heightCm.toInt().toString(),
-                onValueChange = { onProfileChange(profile.copy(heightCm = it.toDoubleOrNull() ?: profile.heightCm)) },
+                value = heightValue,
+                onValueChange = { newValue ->
+                    heightValue = newValue
+                    val parsed = newValue.text.toDoubleOrNull()
+                    if (parsed != null && parsed in 50.0..250.0) {
+                        onProfileChange(profile.copy(heightCm = parsed))
+                    }
+                },
                 label = { Text("Altezza (cm)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && heightValue.text.isNotEmpty()) {
+                            heightValue = heightValue.copy(selection = TextRange(0, heightValue.text.length))
+                        }
+                    },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
         }
 
@@ -267,22 +310,49 @@ private fun StepPhysicalData(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
-                value = profile.currentWeightKg.toString(),
-                onValueChange = { onProfileChange(profile.copy(currentWeightKg = it.toDoubleOrNull() ?: profile.currentWeightKg)) },
+                value = currentWeightValue,
+                onValueChange = { newValue ->
+                    currentWeightValue = newValue
+                    val parsed = newValue.text.toDoubleOrNull()
+                    if (parsed != null && parsed in 30.0..300.0) {
+                        onProfileChange(profile.copy(currentWeightKg = parsed))
+                    }
+                },
                 label = { Text("Peso Attuale (kg)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && currentWeightValue.text.isNotEmpty()) {
+                            currentWeightValue = currentWeightValue.copy(selection = TextRange(0, currentWeightValue.text.length))
+                        }
+                    },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
             OutlinedTextField(
-                value = profile.targetWeightKg.toString(),
-                onValueChange = { onProfileChange(profile.copy(targetWeightKg = it.toDoubleOrNull() ?: profile.targetWeightKg)) },
+                value = targetWeightValue,
+                onValueChange = { newValue ->
+                    targetWeightValue = newValue
+                    val parsed = newValue.text.toDoubleOrNull()
+                    if (parsed != null && parsed in 30.0..300.0) {
+                        onProfileChange(profile.copy(targetWeightKg = parsed))
+                    }
+                },
                 label = { Text("Peso Ideale (kg)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && targetWeightValue.text.isNotEmpty()) {
+                            targetWeightValue = targetWeightValue.copy(selection = TextRange(0, targetWeightValue.text.length))
+                        }
+                    },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
         }
+
 
         Spacer(modifier = Modifier.height(20.dp))
 
