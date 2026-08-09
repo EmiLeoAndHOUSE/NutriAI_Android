@@ -169,6 +169,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun generateCustomMeal(mealType: MealType, userDesire: String) {
+        if (userDesire.isBlank()) return
+        viewModelScope.launch {
+            val currentPlan = _weeklyPlan.value ?: return@launch
+            val currentDayIdx = currentPlan.selectedDayIndex
+            val activeDay = currentPlan.days.getOrNull(currentDayIdx) ?: return@launch
+
+            _isLoading.value = true
+            val currentProfile = _userProfile.value
+            val numSlots = activeDay.slots.size.coerceAtLeast(1)
+            val slotTarget = MacroTarget(
+                calories = activeDay.target.calories / numSlots,
+                proteinGrams = activeDay.target.proteinGrams / numSlots,
+                carbsGrams = activeDay.target.carbsGrams / numSlots,
+                fatGrams = activeDay.target.fatGrams / numSlots
+            )
+
+            val result = geminiApiService.generateCustomUserMealOption(
+                profile = currentProfile,
+                targetSlotMacro = slotTarget,
+                mealType = mealType,
+                userDesire = userDesire,
+                apiKey = _apiKey.value
+            )
+
+            result.onSuccess { customOption ->
+                val updatedSlots = activeDay.slots.map { slot ->
+                    if (slot.mealType == mealType) {
+                        val newOptions = slot.options + customOption
+                        slot.copy(options = newOptions, selectedOptionIndex = newOptions.lastIndex)
+                    } else {
+                        slot
+                    }
+                }
+                val updatedDays = currentPlan.days.toMutableList()
+                updatedDays[currentDayIdx] = activeDay.copy(slots = updatedSlots)
+                _weeklyPlan.value = currentPlan.copy(days = updatedDays)
+            }.onFailure { err ->
+                _errorMessage.value = "Impossibile creare il piatto personalizzato: ${err.localizedMessage}"
+            }
+            _isLoading.value = false
+        }
+    }
+
+
     fun clearError() {
         _errorMessage.value = null
     }

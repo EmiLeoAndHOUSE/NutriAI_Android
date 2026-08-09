@@ -1,0 +1,12 @@
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\data\local\UserPreferencesRepository.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\MainActivity.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\theme\Theme.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\domain\calculator\NutritionalCalculator.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\onboarding\OnboardingScreen.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\data\model\ItalianFoodCatalog.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\MainViewModel.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\dashboard\DashboardScreen.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\theme\Color.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\data\model\Models.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\data\remote\GeminiApiService.kt
+C:\Users\andre\.gemini\antigravity\scratch\NutriAI_Android\app\src\main\java\com\nutriai\app\ui\settings\SettingsScreen.kt

@@ -77,8 +77,10 @@ data class MealOption(
     val carbsGrams: Int,
     val fatGrams: Int,
     val ingredients: List<String>,
-    val recipeSteps: List<String>
+    val recipeSteps: List<String>,
+    val isCustom: Boolean = false
 )
+
 
 @Serializable
 data class MealSlotPlan(

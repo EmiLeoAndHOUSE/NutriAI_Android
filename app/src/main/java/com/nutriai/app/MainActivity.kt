@@ -91,10 +91,12 @@ fun NutriAppContent(viewModel: MainViewModel) {
                         onRefreshPlan = { viewModel.generateWeeklyPlan() },
                         onSelectOption = { mealType, idx -> viewModel.selectMealOption(mealType, idx) },
                         onRegenerateSlot = { mealType -> viewModel.regenerateSlot(mealType) },
+                        onGenerateCustomMeal = { mealType, desire -> viewModel.generateCustomMeal(mealType, desire) },
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
                         onEditProfile = { currentScreen = AppScreen.ONBOARDING }
                     )
                 }
+
                 AppScreen.SETTINGS -> {
                     SettingsScreen(
                         currentApiKey = apiKey,

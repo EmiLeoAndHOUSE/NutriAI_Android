@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
@@ -80,6 +82,7 @@ fun DashboardScreen(
     onRefreshPlan: () -> Unit,
     onSelectOption: (MealType, Int) -> Unit,
     onRegenerateSlot: (MealType) -> Unit,
+    onGenerateCustomMeal: (MealType, String) -> Unit,
     onOpenSettings: () -> Unit,
     onEditProfile: () -> Unit
 ) {
@@ -163,7 +166,6 @@ fun DashboardScreen(
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Selettore dei Giorni della Settimana (Lunedì - Domenica)
                     ScrollableTabRow(
                         selectedTabIndex = weeklyPlan.selectedDayIndex,
                         edgePadding = 0.dp,
@@ -195,7 +197,6 @@ fun DashboardScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Card del Target e Avanzamento Macro del giorno selezionato
                     MacroHeaderCard(
                         target = macroTarget,
                         dayPlan = activeDay,
@@ -228,6 +229,7 @@ fun DashboardScreen(
                             slotPlan = slot,
                             onSelectOption = { idx -> onSelectOption(slot.mealType, idx) },
                             onRegenerateSlot = { onRegenerateSlot(slot.mealType) },
+                            onGenerateCustomMeal = { desire -> onGenerateCustomMeal(slot.mealType, desire) },
                             isLoading = isLoading
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -366,9 +368,13 @@ private fun MealSlotCard(
     slotPlan: MealSlotPlan,
     onSelectOption: (Int) -> Unit,
     onRegenerateSlot: () -> Unit,
+    onGenerateCustomMeal: (String) -> Unit,
     isLoading: Boolean
 ) {
     var expandedRecipe by remember { mutableStateOf(false) }
+    var customDesireText by remember { mutableStateOf("") }
+    var showCustomInput by remember { mutableStateOf(false) }
+
     val activeOption = slotPlan.selectedOption
 
     Card(
@@ -422,7 +428,7 @@ private fun MealSlotCard(
                             onClick = { onSelectOption(index) },
                             text = {
                                 Text(
-                                    text = "Opzione ${index + 1}",
+                                    text = if (option.isCustom) "✨ Su Misura" else "Opzione ${index + 1}",
                                     fontWeight = if (slotPlan.selectedOptionIndex == index) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
@@ -433,6 +439,22 @@ private fun MealSlotCard(
             }
 
             activeOption?.let { option ->
+                if (option.isCustom) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = EmeraldGreen.copy(alpha = 0.15f),
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    ) {
+                        Text(
+                            text = "✨ Piatto creato su tua richiesta specifica",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = EmeraldGreen,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
                 Text(
                     text = option.title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -499,6 +521,63 @@ private fun MealSlotCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Sezione "Cosa ti va di mangiare?" (Desiderio personalizzato)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showCustomInput = !showCustomInput }
+                    .padding(vertical = 4.dp)
+            ) {
+                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Cosa ti va di mangiare per ${slotPlan.mealType.label}?",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = EmeraldGreen,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = if (showCustomInput) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = EmeraldGreen
+                )
+            }
+
+            AnimatedVisibility(visible = showCustomInput) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = customDesireText,
+                        onValueChange = { customDesireText = it },
+                        label = { Text("Es. Pancake proteici al cioccolato, oppure Toast uova e avocado...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (customDesireText.isNotBlank()) {
+                                onGenerateCustomMeal(customDesireText)
+                                customDesireText = ""
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
+                        enabled = !isLoading && customDesireText.isNotBlank()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Componi questo piatto per me con AI ✨")
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedButton(
                 onClick = onRegenerateSlot,
                 modifier = Modifier.fillMaxWidth(),
@@ -507,9 +586,9 @@ private fun MealSlotCard(
                 enabled = !isLoading
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Rigenera questo pasto con AI")
+                    Text("Rigenera questo pasto casualmente")
                 }
             }
         }

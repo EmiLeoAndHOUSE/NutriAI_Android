@@ -59,8 +59,27 @@ class GeminiApiService {
     }
 
     /**
-     * Rigenera le opzioni per un singolo pasto specificato garantendo ricette fresche e diverse.
+     * Genera un piatto personalizzato bilanciato in base alla richiesta specifica espressa dall'utente.
      */
+    suspend fun generateCustomUserMealOption(
+        profile: UserProfile,
+        targetSlotMacro: MacroTarget,
+        mealType: MealType,
+        userDesire: String,
+        apiKey: String
+    ): Result<MealOption> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank() || apiKey == "YOUR_GEMINI_API_KEY_HERE") {
+            return@withContext Result.success(generateMockCustomMealOption(mealType, targetSlotMacro, userDesire))
+        }
+
+        runCatching {
+            val prompt = buildCustomDesirePrompt(profile, targetSlotMacro, mealType, userDesire)
+            val jsonResponseString = callGeminiApi(prompt, apiKey)
+            val options = parseMealOptionsFromJson(jsonResponseString)
+            options.firstOrNull()?.copy(isCustom = true) ?: generateMockCustomMealOption(mealType, targetSlotMacro, userDesire)
+        }
+    }
+
     suspend fun regenerateMealSlot(
         profile: UserProfile,
         targetSlotMacro: MacroTarget,
@@ -456,39 +475,51 @@ class GeminiApiService {
         }
     }
 
-    private fun generateRandomizedMockMealOptions(
-        mealType: MealType,
-        slotMacro: MacroTarget,
-        profile: UserProfile
-    ): List<MealOption> {
-        val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi", "Farro", "Riso Venere", "Cuscus", "Patate dolce").shuffled().first()
-        val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
-        val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori", "Broccoli", "Asparagi", "Finocchi").shuffled().first()
+    private fun buildCustomDesirePrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType, userDesire: String): String {
+        return """
+            L'utente ha espresso il desiderio specifico di mangiare: "$userDesire" per il pasto ${mealType.label} (${mealType.name}).
+            Crea un piatto sano e bilanciato che soddisfi questa richiesta e rispetti al grammo i seguenti macro target:
+            - Calorie: ~${slotTarget.calories} kcal
+            - Proteine: ~${slotTarget.proteinGrams}g
+            - Carboidrati: ~${slotTarget.carbsGrams}g
+            - Grassi: ~${slotTarget.fatGrams}g
+            - ALLERGIE DA EVITARE: ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
 
-        val newTitle1 = "$randomCarbs con $randomProtein e $randomVeg"
-        val newTitle2 = "Insalata calda di $randomCarbs, $randomProtein e $randomVeg"
+            Rispondi ESCLUSIVAMENTE con un array JSON contenente 1 oggetto MealOption:
+            [
+              {
+                "title": "Titolo Piatto Personalizzato (es. $userDesire Fit/Equilibrato)",
+                "description": "Come questo piatto è stato bilanciato per te per soddisfare la tua voglia di $userDesire.",
+                "calories": ${slotTarget.calories},
+                "proteinGrams": ${slotTarget.proteinGrams},
+                "carbsGrams": ${slotTarget.carbsGrams},
+                "fatGrams": ${slotTarget.fatGrams},
+                "ingredients": ["Ingrediente 1 con dose esatta", "Ingrediente 2 con dose esatta"],
+                "recipeSteps": ["Step 1", "Step 2"]
+              }
+            ]
+        """.trimIndent()
+    }
 
-        return listOf(
-            MealOption(
-                title = newTitle1,
-                description = "Nuova combinazione bilanciata rigenerata per le tue preferenze.",
-                calories = slotMacro.calories,
-                proteinGrams = slotMacro.proteinGrams,
-                carbsGrams = slotMacro.carbsGrams,
-                fatGrams = slotMacro.fatGrams,
-                ingredients = listOf("80g $randomCarbs", "160g $randomProtein", "100g $randomVeg", "1 cucchiaio Olio EVO"),
-                recipeSteps = listOf("Cuoci $randomCarbs al dente.", "Spadella $randomProtein con $randomVeg in olio EVO ed unisci i componenti.")
+    private fun generateMockCustomMealOption(mealType: MealType, slotMacro: MacroTarget, userDesire: String): MealOption {
+        val formattedTitle = userDesire.trim().replaceFirstChar { it.uppercase() }
+        return MealOption(
+            title = "$formattedTitle (Versione Bilanciata NutriAI)",
+            description = "Piatto creato su tua richiesta specifica, dosato per rientrare perfettamente nel tuo target nutrizionale di ${mealType.label}.",
+            calories = slotMacro.calories,
+            proteinGrams = slotMacro.proteinGrams,
+            carbsGrams = slotMacro.carbsGrams,
+            fatGrams = slotMacro.fatGrams,
+            ingredients = listOf(
+                "Ingrediente principale per $formattedTitle (dose calibrata)",
+                "Fonte proteica/carboidrato di supporto per il bilanciamento",
+                "1 cucchiaio Olio EVO o condimento a scelta"
             ),
-            MealOption(
-                title = newTitle2,
-                description = "Alternativa fresca e gustosa rigenerata dall'AI.",
-                calories = slotMacro.calories,
-                proteinGrams = slotMacro.proteinGrams,
-                carbsGrams = slotMacro.carbsGrams,
-                fatGrams = slotMacro.fatGrams,
-                ingredients = listOf("75g $randomCarbs", "150g $randomProtein", "120g $randomVeg", "1 cucchiaio Olio EVO"),
-                recipeSteps = listOf("Griglia $randomProtein.", "Lessa $randomCarbs e mescola con $randomVeg ed olio a crudo.")
-            )
+            recipeSteps = listOf(
+                "Prepara $formattedTitle utilizzando i dosaggi indicati.",
+                "Cuoci a fuoco medio per preservare i macronutrienti e servi caldo."
+            ),
+            isCustom = true
         )
     }
-}
+
