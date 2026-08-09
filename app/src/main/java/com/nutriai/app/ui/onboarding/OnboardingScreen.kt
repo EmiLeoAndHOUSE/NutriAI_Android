@@ -62,6 +62,7 @@ import com.nutriai.app.data.model.ActivityLevel
 import com.nutriai.app.data.model.DietGoal
 import com.nutriai.app.data.model.DietaryType
 import com.nutriai.app.data.model.Gender
+import com.nutriai.app.data.model.ItalianFoodCatalog
 import com.nutriai.app.data.model.MealType
 import com.nutriai.app.data.model.UserProfile
 import com.nutriai.app.ui.theme.EmeraldGreen
@@ -480,17 +481,16 @@ private fun StepDietaryTypeAndAllergies(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun StepFoodPreferences(
     profile: UserProfile,
     onProfileChange: (UserProfile) -> Unit
 ) {
-    var newLiked by remember { mutableStateOf("") }
-    var newDisliked by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategoryIndex by remember { mutableIntStateOf(0) }
 
-    val presetLiked = remember { listOf("Salmone", "Avocado", "Avena", "Yogurt Greco", "Riso Venere", "Uova", "Petto di Pollo", "Cioccolato Fondente") }
-    val presetDisliked = remember { listOf("Fegato", "Cavoletti di Bruxelles", "Melanzane", "Cipolla cruda", "Pesce spada") }
+    val categories = ItalianFoodCatalog.categories
 
     Column(
         modifier = Modifier
@@ -498,117 +498,176 @@ private fun StepFoodPreferences(
             .verticalScroll(rememberScrollState())
     ) {
         Text(
-            text = "I tuoi Cibi Preferiti ❤️",
+            text = "Cucina Italiana & Preferenze 🇮🇹",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Indica gli alimenti che ami mangiare ed eventuali cibi che proprio non ti piacciono.",
+            text = "Seleziona gli alimenti che ti piacciono. L'AI userà rigorosamente solo i cibi da te approvati!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Cibi Graditi (da privilegiare)", fontWeight = FontWeight.Bold, color = EmeraldGreen)
-        Spacer(modifier = Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            presetLiked.forEach { food ->
-                val selected = profile.likedFoods.contains(food)
-                FilterChip(
-                    selected = selected,
-                    onClick = {
-                        val newCollection = if (selected) profile.likedFoods - food else profile.likedFoods + food
-                        onProfileChange(profile.copy(likedFoods = newCollection))
-                    },
-                    label = { Text(food) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = EmeraldGreen,
-                        selectedLabelColor = Color.White
-                    )
-                )
-            }
-        }
+        // Campo di ricerca rapida
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Cerca alimento italiano (es. Pasta, Orata, Zucchine)...") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
+        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = newLiked,
-                onValueChange = { newLiked = it },
-                label = { Text("Aggiungi cibo preferito...") },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = {
-                    if (newLiked.isNotBlank()) {
-                        onProfileChange(profile.copy(likedFoods = profile.likedFoods + newLiked.trim()))
-                        newLiked = ""
-                    }
-                },
-                modifier = Modifier
-                    .background(EmeraldGreen, CircleShape)
-                    .padding(4.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (searchQuery.isBlank()) {
+            // Selettore per categorie
+            ScrollableTabRow(
+                selectedTabIndex = selectedCategoryIndex,
+                edgePadding = 0.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = EmeraldGreen,
+                modifier = Modifier.clip(RoundedCornerShape(12.dp))
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi", tint = Color.White)
+                categories.forEachIndexed { index, cat ->
+                    Tab(
+                        selected = selectedCategoryIndex == index,
+                        onClick = { selectedCategoryIndex = index },
+                        text = {
+                            Text(
+                                text = cat.categoryName,
+                                fontWeight = if (selectedCategoryIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 13.sp
+                            )
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val currentCategory = categories.getOrNull(selectedCategoryIndex) ?: categories.first()
+            Text(
+                text = currentCategory.categoryName,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = EmeraldGreen
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                currentCategory.items.forEach { food ->
+                    val isLiked = profile.likedFoods.contains(food)
+                    val isDisliked = profile.dislikedFoods.contains(food)
+
+                    FilterChip(
+                        selected = isLiked,
+                        onClick = {
+                            val newLiked = if (isLiked) profile.likedFoods - food else profile.likedFoods + food
+                            val newDisliked = profile.dislikedFoods - food
+                            onProfileChange(profile.copy(likedFoods = newLiked, dislikedFoods = newDisliked))
+                        },
+                        label = { Text(food) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = EmeraldGreen,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+        } else {
+            // Risultati della ricerca filtrati
+            val filteredFoods = categories.flatMap { it.items }.filter { it.contains(searchQuery, ignoreCase = true) }
+            Text(
+                text = "Risultati ricerca per \"$searchQuery\"",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = EmeraldGreen
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                filteredFoods.forEach { food ->
+                    val isLiked = profile.likedFoods.contains(food)
+                    FilterChip(
+                        selected = isLiked,
+                        onClick = {
+                            val newLiked = if (isLiked) profile.likedFoods - food else profile.likedFoods + food
+                            onProfileChange(profile.copy(likedFoods = newLiked))
+                        },
+                        label = { Text(food) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = EmeraldGreen,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Cibi Sgraditi (da evitare)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
-        Spacer(modifier = Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Cibi Graditi Selezionati (Riepilogo)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            presetDisliked.forEach { food ->
-                val selected = profile.dislikedFoods.contains(food)
-                FilterChip(
-                    selected = selected,
-                    onClick = {
-                        val newCollection = if (selected) profile.dislikedFoods - food else profile.dislikedFoods + food
-                        onProfileChange(profile.copy(dislikedFoods = newCollection))
-                    },
-                    label = { Text(food) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.error,
-                        selectedLabelColor = Color.White
-                    )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "I Tuoi Alimenti Graditi Selezionati (${profile.likedFoods.size})",
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldGreen
                 )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = newDisliked,
-                onValueChange = { newDisliked = it },
-                label = { Text("Aggiungi cibo sgradito...") },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = {
-                    if (newDisliked.isNotBlank()) {
-                        onProfileChange(profile.copy(dislikedFoods = profile.dislikedFoods + newDisliked.trim()))
-                        newDisliked = ""
+                Spacer(modifier = Modifier.height(8.dp))
+                if (profile.likedFoods.isEmpty()) {
+                    Text(
+                        text = "Nessun alimento selezionato. (Se non selezioni cibi specifici, l'AI userà solo ingredienti base neutri come Pollo, Riso, Uova e Zucchine).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        profile.likedFoods.forEach { food ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = EmeraldGreen.copy(alpha = 0.2f),
+                                modifier = Modifier.clickable {
+                                    onProfileChange(profile.copy(likedFoods = profile.likedFoods - food))
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = food, style = MaterialTheme.typography.labelSmall, color = EmeraldGreen)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Rimuovi",
+                                        tint = EmeraldGreen,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
-                },
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.error, CircleShape)
-                    .padding(4.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi", tint = Color.White)
+                }
             }
         }
     }
 }
+
 
 @Composable
 private fun StepMealSlots(

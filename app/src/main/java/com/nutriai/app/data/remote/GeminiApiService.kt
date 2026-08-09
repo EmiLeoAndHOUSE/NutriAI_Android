@@ -74,18 +74,27 @@ class GeminiApiService {
     }
 
     private fun buildFullPlanPrompt(profile: UserProfile, target: MacroTarget): String {
+        val likedStr = if (profile.likedFoods.isNotEmpty()) profile.likedFoods.joinToString(", ") else "Nessun cibo specifico (usa SOLO alimenti neutri: Pollo, Tacchino, Riso, Pasta, Uova, Zucchine)"
+        val dislikedStr = if (profile.dislikedFoods.isNotEmpty()) profile.dislikedFoods.joinToString(", ") else "Nessuno"
+        val allergiesStr = if (profile.allergies.isNotEmpty()) profile.allergies.joinToString(", ") else "Nessuna"
+
         return """
-            Sei un nutrizionista esperto. Genera una giornata alimentare completa e bilanciata in formato JSON.
+            Sei un nutrizionista esperto di cucina italiana. Genera una giornata alimentare completa e bilanciata in formato JSON.
             PARAMETRI UTENTE:
             - Calorie Target Giornaliere: ${target.calories} kcal
             - Proteine Target: ${target.proteinGrams}g
             - Carboidrati Target: ${target.carbsGrams}g
             - Grassi Target: ${target.fatGrams}g
             - Stile Alimentare: ${profile.dietaryType.label}
-            - Allergie/Intolleranze (RIGOROSAMENTE VIETATE): ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
-            - Cibi Preferiti (da privilegiare): ${profile.likedFoods.joinToString().ifEmpty { "Nessuna preferenza speciale" }}
-            - Cibi Sgraditi (da ESCLUDERE): ${profile.dislikedFoods.joinToString().ifEmpty { "Nessuno" }}
+            - ALLERGIE/INTOLLERANZE (RIGOROSAMENTE VIETATE): $allergiesStr
+            - CIBI GRADITI (USA RIGOROSAMENTE QUESTI ALIMENTI): $likedStr
+            - CIBI SGRADITI (DA ESCLUDERE TASSATIVAMENTE): $dislikedStr
             - Pasti richiesti nella giornata: ${profile.activeMealTypes.joinToString { it.name }}
+
+            REGOLE RIGIDE SULLE INGREDIENTI:
+            1. Se l'utente ha selezionato cibi graditi (es. $likedStr), DEVI basare le ricette su tali alimenti.
+            2. NON INSERIRE MAI ALIMENTI SPECIFICI CARATTERIZZANTI (come Salmone, Gorgonzola, Avocado, Fegato, Pesce Spada, Crostacei) SE L'UTENTE NON LI HA ESPLICITAMENTE SELEZIONATI TRA I CIBI GRADITI!
+            3. Per le proteine, se non specificato diversamente tra i cibi graditi, usa solo fonti neutre come Petto di Pollo, Fesa di Tacchino, Uova o Orata/Merluzzo.
 
             REQUISITI FORMATO RISPOSTA:
             Restituisci ESCLUSIVAMENTE un oggetto JSON valido (senza markdown o testo esplicativo extra prima/dopo) con la seguente struttura:
@@ -106,18 +115,21 @@ class GeminiApiService {
                     },
                     {
                       "title": "Seconda alternativa",
-                      ...
+                      "description": "...",
+                      "calories": 400,
+                      "proteinGrams": 25,
+                      "carbsGrams": 45,
+                      "fatGrams": 12,
+                      "ingredients": ["..."],
+                      "recipeSteps": ["..."]
                     }
                   ]
                 }
               ]
             }
-
-            IMPORTANTE:
-            - Per ogni pasto fornisci 2 opzioni diverse tra cui scegliere.
-            - La somma delle calorie e dei macro delle prime opzioni scorte deve avvicinarsi ai target indicati (${target.calories} kcal).
         """.trimIndent()
     }
+
 
     private fun buildSingleSlotPrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType): String {
         return """
@@ -282,11 +294,11 @@ class GeminiApiService {
         return DailyMealPlan(
             dateString = dateStr,
             target = target,
-            slots = generateMockDailyPlanSlots(profile.activeMealTypes, target)
+            slots = generateMockDailyPlanSlots(profile.activeMealTypes, target, profile)
         )
     }
 
-    private fun generateMockDailyPlanSlots(activeTypes: List<MealType>, target: MacroTarget): List<MealSlotPlan> {
+    private fun generateMockDailyPlanSlots(activeTypes: List<MealType>, target: MacroTarget, profile: UserProfile): List<MealSlotPlan> {
         return activeTypes.map { mealType ->
             val slotMacro = MacroTarget(
                 calories = (target.calories / activeTypes.size),
@@ -296,13 +308,26 @@ class GeminiApiService {
             )
             MealSlotPlan(
                 mealType = mealType,
-                options = generateMockMealOptions(mealType, slotMacro),
+                options = generateMockMealOptions(mealType, slotMacro, profile),
                 selectedOptionIndex = 0
             )
         }
     }
 
-    private fun generateMockMealOptions(mealType: MealType, slotMacro: MacroTarget): List<MealOption> {
+    private fun generateMockMealOptions(mealType: MealType, slotMacro: MacroTarget, profile: UserProfile): List<MealOption> {
+        val likesSalmon = profile.likedFoods.any { it.contains("Salmone", ignoreCase = true) }
+        val fishOrMeatTitle = if (likesSalmon) "Riso Venere con Salmone e Zucchine" else "Pasta Integrale con Petto di Pollo e Zucchine"
+        val fishOrMeatIngredients = if (likesSalmon) {
+            listOf("80g Riso Venere", "150g Filetto di Salmone fresco", "1 Zucchina media", "1 cucchiaio Olio EVO")
+        } else {
+            listOf("80g Pasta Integrale", "160g Petto di Pollo a bocconcini", "1 Zucchina media", "1 cucchiaio Olio EVO")
+        }
+        val fishOrMeatSteps = if (likesSalmon) {
+            listOf("Lessa il riso venere per 18 minuti.", "Spadella le zucchine tagliate a rondelle con olio EVO.", "Cuoci il salmone alla piastra e unisci gli ingredienti.")
+        } else {
+            listOf("Cuoci la pasta integrale al dente.", "Salta i bocconcini di pollo in padella con le zucchine ed olio EVO.", "Manteca la pasta con il condimento.")
+        }
+
         return when (mealType) {
             MealType.BREAKFAST -> listOf(
                 MealOption(
@@ -328,14 +353,14 @@ class GeminiApiService {
             )
             MealType.LUNCH -> listOf(
                 MealOption(
-                    title = "Riso Venere con Salmone e Zucchine",
-                    description = "Piatto ricco di Omega 3 e carboidrati complessi a basso indice glicemico.",
+                    title = fishOrMeatTitle,
+                    description = "Piatto sano e nutriente secondo le tue preferenze alimentari.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("80g Riso Venere", "150g Filetto di salmone", "1 Zucchina media", "1 cucchiaio Olio EVO"),
-                    recipeSteps = listOf("Lessa il riso venere per 18 minuti.", "Spadella le zucchine tagliate a rondelle con olio EVO.", "Cuoci il salmone alla piastra e unisci tutti gli ingredienti.")
+                    ingredients = fishOrMeatIngredients,
+                    recipeSteps = fishOrMeatSteps
                 ),
                 MealOption(
                     title = "Bowl di Quinoa, Pollo e Avocado",
@@ -394,4 +419,5 @@ class GeminiApiService {
             )
         }
     }
+
 }
