@@ -523,3 +523,40 @@ class GeminiApiService {
         )
     }
 
+        mealType: MealType,
+        slotMacro: MacroTarget,
+        profile: UserProfile
+    ): List<MealOption> {
+        val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi", "Farro", "Riso Venere", "Cuscus", "Patate dolce").shuffled().first()
+        val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
+        val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori", "Broccoli", "Asparagi", "Finocchi").shuffled().first()
+
+        val newTitle1 = "$randomCarbs con $randomProtein e $randomVeg"
+        val newTitle2 = "Insalata calda di $randomCarbs, $randomProtein e $randomVeg"
+
+        return listOf(
+            MealOption(
+                title = newTitle1,
+                description = "Nuova combinazione bilanciata rigenerata per le tue preferenze.",
+                calories = slotMacro.calories,
+                proteinGrams = slotMacro.proteinGrams,
+                carbsGrams = slotMacro.carbsGrams,
+                fatGrams = slotMacro.fatGrams,
+                ingredients = listOf("80g $randomCarbs", "160g $randomProtein", "100g $randomVeg", "1 cucchiaio Olio EVO"),
+                recipeSteps = listOf("Cuoci $randomCarbs al dente.", "Spadella $randomProtein con $randomVeg in olio EVO ed unisci i componenti.")
+            ),
+            MealOption(
+                title = newTitle2,
+                description = "Alternativa fresca e gustosa rigenerata dall'AI.",
+                calories = slotMacro.calories,
+                proteinGrams = slotMacro.proteinGrams,
+                carbsGrams = slotMacro.carbsGrams,
+                fatGrams = slotMacro.fatGrams,
+                ingredients = listOf("75g $randomCarbs", "150g $randomProtein", "120g $randomVeg", "1 cucchiaio Olio EVO"),
+                recipeSteps = listOf("Griglia $randomProtein.", "Lessa $randomCarbs e mescola con $randomVeg ed olio a crudo.")
+            )
+        )
+    }
+}
+
+
