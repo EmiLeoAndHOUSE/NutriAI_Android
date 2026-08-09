@@ -248,16 +248,16 @@ private fun StepPhysicalData(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Input numerici con selezione automatica del testo al tocco per sovrascrittura immediata
-        var ageValue by remember(profile.age) {
+        var ageValue by remember {
             mutableStateOf(TextFieldValue(text = if (profile.age > 0) profile.age.toString() else ""))
         }
-        var heightValue by remember(profile.heightCm) {
+        var heightValue by remember {
             mutableStateOf(TextFieldValue(text = if (profile.heightCm > 0) profile.heightCm.toInt().toString() else ""))
         }
-        var currentWeightValue by remember(profile.currentWeightKg) {
+        var currentWeightValue by remember {
             mutableStateOf(TextFieldValue(text = if (profile.currentWeightKg > 0) profile.currentWeightKg.toString() else ""))
         }
-        var targetWeightValue by remember(profile.targetWeightKg) {
+        var targetWeightValue by remember {
             mutableStateOf(TextFieldValue(text = if (profile.targetWeightKg > 0) profile.targetWeightKg.toString() else ""))
         }
 
@@ -267,7 +267,7 @@ private fun StepPhysicalData(
                 onValueChange = { newValue ->
                     ageValue = newValue
                     val parsed = newValue.text.toIntOrNull()
-                    if (parsed != null && parsed in 1..120) {
+                    if (parsed != null) {
                         onProfileChange(profile.copy(age = parsed))
                     }
                 },
@@ -288,7 +288,7 @@ private fun StepPhysicalData(
                 onValueChange = { newValue ->
                     heightValue = newValue
                     val parsed = newValue.text.toDoubleOrNull()
-                    if (parsed != null && parsed in 50.0..250.0) {
+                    if (parsed != null) {
                         onProfileChange(profile.copy(heightCm = parsed))
                     }
                 },
@@ -314,7 +314,7 @@ private fun StepPhysicalData(
                 onValueChange = { newValue ->
                     currentWeightValue = newValue
                     val parsed = newValue.text.toDoubleOrNull()
-                    if (parsed != null && parsed in 30.0..300.0) {
+                    if (parsed != null) {
                         onProfileChange(profile.copy(currentWeightKg = parsed))
                     }
                 },
@@ -335,7 +335,7 @@ private fun StepPhysicalData(
                 onValueChange = { newValue ->
                     targetWeightValue = newValue
                     val parsed = newValue.text.toDoubleOrNull()
-                    if (parsed != null && parsed in 30.0..300.0) {
+                    if (parsed != null) {
                         onProfileChange(profile.copy(targetWeightKg = parsed))
                     }
                 },
@@ -352,6 +352,7 @@ private fun StepPhysicalData(
                 singleLine = true
             )
         }
+
 
 
         Spacer(modifier = Modifier.height(20.dp))

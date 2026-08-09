@@ -80,6 +80,9 @@ class GeminiApiService {
         }
     }
 
+    /**
+     * Rigenera le opzioni per un singolo pasto specificato garantendo ricette rigorosamente adatte a quel momento della giornata.
+     */
     suspend fun regenerateMealSlot(
         profile: UserProfile,
         targetSlotMacro: MacroTarget,
@@ -99,7 +102,7 @@ class GeminiApiService {
     }
 
     private fun buildWeeklyPlanPrompt(profile: UserProfile, target: MacroTarget): String {
-        val likedStr = if (profile.likedFoods.isNotEmpty()) profile.likedFoods.joinToString(", ") else "Nessun cibo specifico (usa SOLO alimenti neutri: Pollo, Tacchino, Riso, Pasta, Uova, Zucchine)"
+        val likedStr = if (profile.likedFoods.isNotEmpty()) profile.likedFoods.joinToString(", ") else "Nessun cibo specifico (usa SOLO alimenti tradizionali della cucina italiana)"
         val dislikedStr = if (profile.dislikedFoods.isNotEmpty()) profile.dislikedFoods.joinToString(", ") else "Nessuno"
         val allergiesStr = if (profile.allergies.isNotEmpty()) profile.allergies.joinToString(", ") else "Nessuna"
 
@@ -116,10 +119,13 @@ class GeminiApiService {
             - CIBI SGRADITI (DA ESCLUDERE TASSATIVAMENTE): $dislikedStr
             - Pasti richiesti per giorno: ${profile.activeMealTypes.joinToString { it.name }}
 
-            REGOLE IMPERATIVE PER LA VARIETÀ SETTIMANALE:
-            1. OGNI GIORNO (Lunedì, Martedì, Mercoledì, Giovedì, Venerdì, Sabato, Domenica) DEVE AVERE RICETTE COMPLETAMENTE DIVERSE.
-            2. Varia le fonti di carboidrati tra i giorni (es. Lunedì Pasta, Martedì Riso, Mercoledì Gnocchi, Giovedì Farro, Venerdì Polenta/Riso, Sabato Piadina, Domenica Patate).
-            3. NON INSERIRE MAI ALIMENTI SPECIFICI CARATTERIZZANTI (come Salmone, Gorgonzola, Avocado, Fegato, Pesce Spada, Crostacei) SE L'UTENTE NON LI HA ESPLICITAMENTE SELEZIONATI TRA I CIBI GRADITI!
+            REGOLE IMPERATIVE PER IL MOMENTO DELLA GIORNATA:
+            1. COLAZIONE (BREAKFAST): Solo ed unicamente cibi da colazione italiana (Porridge, Pancake, Toast dolci/salati con ricotta o uova, Yogurt greco con frutta/frutta secca, Fette biscottate). MAI PASTA, RISO SALATO, CARNE O PESCE A COLAZIONE!
+            2. SPUNTINI (SNACK_MORNING / SNACK_AFTERNOON): Solo spuntini spezza-fame sani italiani (Yogurt greco, frutta fresca, tostino con affettato magro, parmigiano, frullato).
+            3. PRANZO (LUNCH): Primi piatti bilanciati o piatti unici (Pasta, Riso, Farro, Gnocchi, Polenta con proteine magre e verdure).
+            4. CENA (DINNER): Secondi piatti proteici (pesce, carne magra, uova) con contorno ed una quota di carboidrati moderata.
+            5. OGNI GIORNO DEVE AVERE RICETTE COMPLETAMENTE DIVERSE.
+            6. NON INSERIRE MAI ALIMENTI CARATTERIZZANTI (come Salmone, Gorgonzola, Avocado, Fegato) SE L'UTENTE NON LI HA ESPLICITAMENTE SELEZIONATI TRA I CIBI GRADITI!
 
             REQUISITI FORMATO RISPOSTA JSON:
             Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
@@ -140,16 +146,6 @@ class GeminiApiService {
                           "fatGrams": 12,
                           "ingredients": ["Ingrediente 1 con peso"],
                           "recipeSteps": ["Step 1"]
-                        },
-                        {
-                          "title": "Seconda Alternativa",
-                          "description": "...",
-                          "calories": 400,
-                          "proteinGrams": 25,
-                          "carbsGrams": 45,
-                          "fatGrams": 12,
-                          "ingredients": ["..."],
-                          "recipeSteps": ["..."]
                         }
                       ]
                     }
@@ -162,26 +158,49 @@ class GeminiApiService {
 
     private fun buildSingleSlotPrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType): String {
         val randomSeed = Random.nextInt(1000, 9999)
+        val mealSpecificInstruction = when (mealType) {
+            MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi unicamente alimenti tipici da COLAZIONE della tradizione italiana (es. Porridge, Pancake proteici, Toast dolci o salati con uova/ricotta, Yogurt greco con frutta fresca/secca, Fette biscottate con marmellata, Cappuccino/latte vegetale). NON PROPORRE MAI PIATTI DA PRANZO O CENA (Tassativamente vietati gnocchi, pasta, riso salato, carne rossa/bianca, pesce a colazione!)."
+            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> "QUESTO PASTO È UNO SPUNTINO. Proponi unicamente spuntini spezza-fame italiani sani e veloci (es. Yogurt greco con mandorle/noci e frutto, tostino con affettato magro, parmigiano con frutto, frullato proteico). NON PROPORRE PIATTI DA PRANZO/CENA."
+            MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi un primo piatto bilanciato o piatto unico della cucina italiana (es. Riso, Pasta integrale, Farro, Gnocchi, Polenta conditi con fonti proteiche e verdure)."
+            MealType.DINNER -> "QUESTO PASTO È LA CENA. Proponi un secondo piatto proteico della cucina italiana (pesce, carne magra, uova) accompagnato da abbondanti verdure ed una fonte moderata di carboidrati (pane integrale, patate al forno, riso basmati)."
+        }
+
         return """
-            Genera 2 NUOVE ED INEDITI alternative gustose (Seed: $randomSeed) per il pasto: ${mealType.label} (${mealType.name}).
+            Genera 2 NUOVE ED INEDITI alternative (Seed: $randomSeed) per il pasto: ${mealType.label} (${mealType.name}).
+            $mealSpecificInstruction
+
             TARGET PER QUESTO PASTO:
             - Calorie: ~${slotTarget.calories} kcal
             - Proteine: ~${slotTarget.proteinGrams}g
             - Carboidrati: ~${slotTarget.carbsGrams}g
             - Grassi: ~${slotTarget.fatGrams}g
             - Allergie da evitare: ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
-            - Cibi graditi preferiti: ${profile.likedFoods.joinToString().ifEmpty { "Alimenti neutri italiani" }}
+            - Cibi graditi preferiti: ${profile.likedFoods.joinToString().ifEmpty { "Alimenti tradizionali della cucina italiana" }}
 
-            Rispondi ESCLUSIVAMENTE con un array JSON di 2 oggetti MealOption:
+            Rispondi ESCLUSIVAMENTE con un array JSON di 2 oggetti MealOption.
+        """.trimIndent()
+    }
+
+    private fun buildCustomDesirePrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType, userDesire: String): String {
+        return """
+            L'utente ha espresso il desiderio specifico di mangiare: "$userDesire" per il pasto ${mealType.label} (${mealType.name}).
+            Crea un piatto sano e bilanciato che soddisfi questa richiesta e rispetti al grammo i seguenti macro target per questo pasto:
+            - Calorie: ~${slotTarget.calories} kcal
+            - Proteine: ~${slotTarget.proteinGrams}g
+            - Carboidrati: ~${slotTarget.carbsGrams}g
+            - Grassi: ~${slotTarget.fatGrams}g
+            - ALLERGIE DA EVITARE: ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
+
+            Rispondi ESCLUSIVAMENTE con un array JSON contenente 1 oggetto MealOption:
             [
               {
-                "title": "Nome piatto originale",
-                "description": "Descrizione",
+                "title": "$userDesire (Versione Bilanciata)",
+                "description": "Come questo piatto è stato bilanciato per te per soddisfare la tua voglia di $userDesire a ${mealType.label}.",
                 "calories": ${slotTarget.calories},
                 "proteinGrams": ${slotTarget.proteinGrams},
                 "carbsGrams": ${slotTarget.carbsGrams},
                 "fatGrams": ${slotTarget.fatGrams},
-                "ingredients": ["Ingrediente 1", "Ingrediente 2"],
+                "ingredients": ["Ingrediente 1 con dose esatta", "Ingrediente 2 con dose esatta"],
                 "recipeSteps": ["Step 1", "Step 2"]
               }
             ]
@@ -329,7 +348,7 @@ class GeminiApiService {
         return s.trim()
     }
 
-    // --- GENERATORE DI MOCK SETTIMANALE DINAMICO E VARIABILE ---
+    // --- GENERATORE DI MOCK SETTIMANALE ED OFFERTA PASTI SPECIFICA PER IL MOMENTO DELLA GIORNATA ---
 
     private fun generateMockWeeklyPlan(profile: UserProfile, target: MacroTarget): WeeklyMealPlan {
         val cal = Calendar.getInstance()
@@ -376,129 +395,221 @@ class GeminiApiService {
     ): List<MealOption> {
         val likesSalmon = profile.likedFoods.any { it.contains("Salmone", ignoreCase = true) }
 
-        // Varietà di carboidrati e proteine per i 7 giorni
-        val carbsList = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro con Verdure", "Riso Venere", "Piadina Integrale", "Patate al forno")
-        val proteinList = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Uova strapazzate", "Bresaola della Valtellina", "Mozzarella di Bufala", "Ricotta Magra")
-
-        val dayCarb = carbsList.getOrElse(dayIndex % carbsList.size) { "Pasta Integrale" }
-        val dayProtein = if (likesSalmon && dayIndex == 4) "Salmone Fresco" else proteinList.getOrElse(dayIndex % proteinList.size) { "Petto di Pollo" }
-
         return when (mealType) {
             MealType.BREAKFAST -> listOf(
                 MealOption(
                     title = if (dayIndex % 2 == 0) "Porridge Avena e Frutti di Bosco" else "Pancake Proteici alla Banana",
-                    description = "Colazione energetica bilanciata.",
+                    description = "Colazione energetica bilanciata della tradizione italiana.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
                     ingredients = listOf("60g Fiocchi d'avena", "150ml Latte scremato", "100g Frutti di bosco"),
-                    recipeSteps = listOf("Scalda il latte con l'avena per 5 minuti e servire caldo.")
+                    recipeSteps = listOf("Scalda il latte con l'avena per 5 minuti e servire caldo con frutti di bosco.")
                 ),
                 MealOption(
-                    title = "Toast Integrale con Ricotta e Miele",
-                    description = "Alternativa soffice e gustosa.",
+                    title = "Toast Integrale con Ricotta Magra e Miele",
+                    description = "Alternativa soffice e gustosa per colazione.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
                     ingredients = listOf("60g Pane integrale tostato", "80g Ricotta magra", "10g Miele"),
-                    recipeSteps = listOf("Tosta il pane e spalma la ricotta con miele a filo.")
+                    recipeSteps = listOf("Tosta il pane integrale e spalma la ricotta con il miele a filo.")
                 )
             )
-            MealType.LUNCH -> listOf(
-                MealOption(
-                    title = "$dayCarb con $dayProtein e Zucchine",
-                    description = "Pranzo completo ed equilibrato secondo le tue preferenze.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("80g $dayCarb", "160g $dayProtein", "1 Zucchina", "1 cucchiaio Olio EVO"),
-                    recipeSteps = listOf("Cuoci $dayCarb in acqua salata.", "Salta $dayProtein con zucchine ed olio EVO e servire caldo.")
-                ),
-                MealOption(
-                    title = "Bowl di Quinoa con Tacchino e Pomodorini",
-                    description = "Alternativa fresca e ricca di nutrienti.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("70g Quinoa", "150g Fesa di Tacchino", "Pomodorini", "Olio EVO"),
-                    recipeSteps = listOf("Cuoci la quinoa e condisci con tacchino e pomodorini freschi.")
-                )
-            )
-            MealType.DINNER -> listOf(
-                MealOption(
-                    title = "Filetto di $dayProtein al Cartoccio con Insalata",
-                    description = "Cena leggera e ad alta digeribilità.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("180g $dayProtein", "Insalata mista", "60g Pane integrale", "1 cucchiaio Olio EVO"),
-                    recipeSteps = listOf("Cuoci in forno o piastra $dayProtein con erbe aromatiche e servi con insalata.")
-                ),
-                MealOption(
-                    title = "Omelette alle Erbe con Verdure Grigliate",
-                    description = "Cena rapida e proteica.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("2 Uova + 100g Albumi", "Melanzane e Zucchine grigliate", "Olio EVO"),
-                    recipeSteps = listOf("Cuoci l'omelette in padella e servire con verdure grigliate.")
-                )
-            )
-            else -> listOf(
+            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> listOf(
                 MealOption(
                     title = "Yogurt Greco 0% con Mandorle e Mela",
-                    description = "Spuntino spezza-fame saziante.",
+                    description = "Spuntino spezza-fame saziante e ricco di proteine.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
                     ingredients = listOf("170g Yogurt Greco 0%", "15g Mandorle", "1 Mela"),
-                    recipeSteps = listOf("Unisci lo yogurt con frutta e mandorle tritate.")
+                    recipeSteps = listOf("Mescola lo yogurt con la mela a cubetti e le mandorle tritate.")
                 ),
                 MealOption(
-                    title = "Frullato Proteico Banana e Cacao",
-                    description = "Merenda energetica rapida.",
+                    title = "Tostino Integrale con Bresaola e Rucola",
+                    description = "Merenda salata veloce ed ad alto tenore proteico.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("200ml Latte vegetale", "1 Banana", "15g Cacao amaro", "20g Proteine"),
-                    recipeSteps = listOf("Frulla tutto per 30 secondi e servire fresco.")
+                    ingredients = listOf("40g Pane integrale", "50g Bresaola", "Rucola", "1 cucchiaino Olio EVO"),
+                    recipeSteps = listOf("Farcisci il pane con bresaola e rucola ed un filo d'olio EVO.")
                 )
             )
+            MealType.LUNCH -> {
+                val carbsList = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro integrale", "Riso Venere")
+                val proteinList = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Uova strapazzate", "Bresaola")
+                val dayCarb = carbsList.getOrElse(dayIndex % carbsList.size) { "Pasta Integrale" }
+                val dayProtein = proteinList.getOrElse(dayIndex % proteinList.size) { "Petto di Pollo" }
+
+                listOf(
+                    MealOption(
+                        title = "$dayCarb con $dayProtein e Zucchine",
+                        description = "Pranzo completo ed equilibrato secondo le tue preferenze.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("80g $dayCarb", "160g $dayProtein", "1 Zucchina", "1 cucchiaio Olio EVO"),
+                        recipeSteps = listOf("Cuoci $dayCarb in acqua salata.", "Salta $dayProtein con zucchine ed olio EVO e servire caldo.")
+                    ),
+                    MealOption(
+                        title = "Bowl di Quinoa con Tacchino e Pomodorini",
+                        description = "Alternativa fresca e ricca di nutrienti per il pranzo.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("70g Quinoa", "150g Fesa di Tacchino", "Pomodorini", "Olio EVO"),
+                        recipeSteps = listOf("Cuoci la quinoa e condisci con tacchino e pomodorini freschi.")
+                    )
+                )
+            }
+            MealType.DINNER -> {
+                val proteinList = listOf("Filetto di Spigola", "Petto di Tacchino", "Tagliata di Pollo", "Omelette alle Erbe")
+                val dayProtein = if (likesSalmon && dayIndex == 4) "Salmone al Cartoccio" else proteinList.getOrElse(dayIndex % proteinList.size) { "Filetto di Spigola" }
+
+                listOf(
+                    MealOption(
+                        title = "$dayProtein al Cartoccio con Insalata e Pane Integrale",
+                        description = "Cena leggera e ad alta digeribilità.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("180g $dayProtein", "Insalata mista", "60g Pane integrale", "1 cucchiaio Olio EVO"),
+                        recipeSteps = listOf("Cuoci in forno o piastra $dayProtein con erbe aromatiche e servi con insalata.")
+                    ),
+                    MealOption(
+                        title = "Omelette alle Erbe con Verdure Grigliate",
+                        description = "Cena rapida e proteica.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("2 Uova + 100g Albumi", "Melanzane e Zucchine grigliate", "Olio EVO"),
+                        recipeSteps = listOf("Cuoci l'omelette in padella e servire con verdure grigliate.")
+                    )
+                )
+            }
         }
     }
 
-    private fun buildCustomDesirePrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType, userDesire: String): String {
-        return """
-            L'utente ha espresso il desiderio specifico di mangiare: "$userDesire" per il pasto ${mealType.label} (${mealType.name}).
-            Crea un piatto sano e bilanciato che soddisfi questa richiesta e rispetti al grammo i seguenti macro target:
-            - Calorie: ~${slotTarget.calories} kcal
-            - Proteine: ~${slotTarget.proteinGrams}g
-            - Carboidrati: ~${slotTarget.carbsGrams}g
-            - Grassi: ~${slotTarget.fatGrams}g
-            - ALLERGIE DA EVITARE: ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
+    private fun generateRandomizedMockMealOptions(
+        mealType: MealType,
+        slotMacro: MacroTarget,
+        profile: UserProfile
+    ): List<MealOption> {
+        val likesSalmon = profile.likedFoods.any { it.contains("Salmone", ignoreCase = true) }
 
-            Rispondi ESCLUSIVAMENTE con un array JSON contenente 1 oggetto MealOption:
-            [
-              {
-                "title": "Titolo Piatto Personalizzato (es. $userDesire Fit/Equilibrato)",
-                "description": "Come questo piatto è stato bilanciato per te per soddisfare la tua voglia di $userDesire.",
-                "calories": ${slotTarget.calories},
-                "proteinGrams": ${slotTarget.proteinGrams},
-                "carbsGrams": ${slotTarget.carbsGrams},
-                "fatGrams": ${slotTarget.fatGrams},
-                "ingredients": ["Ingrediente 1 con dose esatta", "Ingrediente 2 con dose esatta"],
-                "recipeSteps": ["Step 1", "Step 2"]
-              }
-            ]
-        """.trimIndent()
+        return when (mealType) {
+            MealType.BREAKFAST -> {
+                val breakfastPool = listOf(
+                    MealOption(
+                        title = "Porridge caldo d'Avena con Mirtilli e Mandorle",
+                        description = "Nuova combinazione da colazione ricca di fibre e grassi sani.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("60g Fiocchi d'avena", "150ml Latte scremato", "80g Mirtilli freschi", "15g Mandorle tritate", "1 cucchiaino Miele"),
+                        recipeSteps = listOf("Cuoci l'avena nel latte caldo per 5 minuti.", "Servi con mirtilli freschi e mandorle tritate.")
+                    ),
+                    MealOption(
+                        title = "Pancake Proteici al Cacao con Banana a Fette",
+                        description = "Colazione sfiziosa e proteica rigenerata per te.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("50g Farina d'avena", "100ml Albumi", "1 Banana", "10g Cacao amaro", "10g Noci"),
+                        recipeSteps = listOf("Schiaccia la banana con albumi, farina e cacao.", "Cuoci in padella antiaderente 2 min per lato.")
+                    ),
+                    MealOption(
+                        title = "Toast Integrale con Ricotta Magra e Miele d'Acacia",
+                        description = "Colazione dolce tradizionale e bilanciata.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("60g Pane integrale tostato", "80g Ricotta magra", "15g Miele", "1 Spicchio d'arancia"),
+                        recipeSteps = listOf("Tosta il pane integrale.", "Spalma la ricotta e guarnisci con miele d'acacia.")
+                    ),
+                    MealOption(
+                        title = "Coppetta di Yogurt Greco 0% con Cereali Integrali e Noci",
+                        description = "Colazione fresca e veloce ricca di probiotici.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("170g Yogurt Greco 0%", "40g Cereali integrali d'avena", "15g Noci aperte", "1 Mela a cubetti"),
+                        recipeSteps = listOf("Unisci lo yogurt con i cereali integrali, le noci e i pezzetti di mela.")
+                    )
+                ).shuffled()
+                breakfastPool.take(2)
+            }
+            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> {
+                val snackPool = listOf(
+                    MealOption(
+                        title = "Yogurt Greco 0% con Noci e Mela Croccante",
+                        description = "Spuntino spezza-fame ad alto potere saziante.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("170g Yogurt Greco 0%", "15g Noci", "1 Mela croccante"),
+                        recipeSteps = listOf("Mescola lo yogurt con le noci tritate e la mela a cubetti.")
+                    ),
+                    MealOption(
+                        title = "Tostino Integrale con Bresaola e Scaglie di Parmigiano",
+                        description = "Spuntino salato rapido ricchissimo di proteine.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("40g Pane integrale", "50g Bresaola della Valtellina", "10g Scaglie di Parmigiano", "1 cucchiaino Olio EVO"),
+                        recipeSteps = listOf("Farcisci il pane con bresaola e parmigiano ed un filo d'olio EVO.")
+                    ),
+                    MealOption(
+                        title = "Frullato Proteico alla Banana e Latte d'Avena",
+                        description = "Merenda rigenerante e saziante.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("200ml Latte d'avena", "1 Banana", "20g Proteine in polvere o albumi", "10g Mandorle"),
+                        recipeSteps = listOf("Frulla tutti gli ingredienti fino ad ottenere una consistenza omogenea.")
+                    )
+                ).shuffled()
+                snackPool.take(2)
+            }
+            MealType.LUNCH -> {
+                val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro", "Riso Venere").shuffled().first()
+                val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
+                val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori", "Broccoli", "Asparagi").shuffled().first()
+
+                listOf(
+                    MealOption(
+                        title = "$randomCarbs con $randomProtein e $randomVeg",
+                        description = "Nuova combinazione di pranzo bilanciata rigenerata per le tue preferenze.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("80g $randomCarbs", "160g $randomProtein", "100g $randomVeg", "1 cucchiaio Olio EVO"),
+                        recipeSteps = listOf("Cuoci $randomCarbs al dente.", "Spadella $randomProtein con $randomVeg in olio EVO ed unisci i componenti.")
+                    ),
+                    MealOption(
+                        title = "Insalata calda di $randomCarbs, $randomProtein e $randomVeg",
+                        description = "Alternativa fresca e gustosa rigenerata per il pranzo.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("75g $randomCarbs", "150g $randomProtein", "120g $randomVeg", "1 cucchiaio Olio EVO"),
+                        recipeSteps = listOf("Griglia $randomProtein.", "Lessa $randomCarbs e mescola con $randomVeg ed olio a crudo.")
+                    )
+                )
+            }
+            MealType.DINNER -> {
+                val mainProtein = if (likesSalmon) "Salmone al Cartoccio" else listOf("Filetto di Spigola", "Tagliata di Petto di Tacchino", "Omelette ai Funghi", "Merluzzo al Vapore").shuffled().first()
+                val mainSide = listOf("Patate al forno ed insalata", "Verdure grigliate e pane integrale", "Spinaci al vapore e pane di segale").shuffled().first()
+
+                listOf(
+                    MealOption(
+                        title = "$mainProtein con $mainSide",
+                        description = "Cena leggera e ad alta digeribilità rigenerata per te.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("180g Fonte proteica ($mainProtein)", "Contorno ($mainSide)", "1 cucchiaio Olio EVO"),
+                        recipeSteps = listOf("Cuoci $mainProtein al forno o alla piastra con erbe aromatiche.", "Accompagna con il contorno fresco ed un filo d'olio EVO.")
+                    ),
+                    MealOption(
+                        title = "Omelette alle Erbe con Verdure Grigliate e Pane Integrale",
+                        description = "Cena rapida, calda e proteica.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("2 Uova + 100ml Albumi", "Melanzane e Zucchine grigliate", "50g Pane integrale", "Olio EVO"),
+                        recipeSteps = listOf("Cuoci l'omelette in padella e servire con verdure grigliate e pane tostato.")
+                    )
+                )
+            }
+        }
     }
 
     private fun generateMockCustomMealOption(mealType: MealType, slotMacro: MacroTarget, userDesire: String): MealOption {
@@ -516,49 +627,10 @@ class GeminiApiService {
                 "1 cucchiaio Olio EVO o condimento a scelta"
             ),
             recipeSteps = listOf(
-                "Prepara $formattedTitle utilizzando i dosaggi indicati.",
+                "Prepara $formattedTitle utilizzando i dosaggi indicati per ${mealType.label}.",
                 "Cuoci a fuoco medio per preservare i macronutrienti e servi caldo."
             ),
             isCustom = true
         )
     }
-
-    private fun generateRandomizedMockMealOptions(
-        mealType: MealType,
-        slotMacro: MacroTarget,
-        profile: UserProfile
-    ): List<MealOption> {
-
-        val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi", "Farro", "Riso Venere", "Cuscus", "Patate dolce").shuffled().first()
-        val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
-        val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori", "Broccoli", "Asparagi", "Finocchi").shuffled().first()
-
-        val newTitle1 = "$randomCarbs con $randomProtein e $randomVeg"
-        val newTitle2 = "Insalata calda di $randomCarbs, $randomProtein e $randomVeg"
-
-        return listOf(
-            MealOption(
-                title = newTitle1,
-                description = "Nuova combinazione bilanciata rigenerata per le tue preferenze.",
-                calories = slotMacro.calories,
-                proteinGrams = slotMacro.proteinGrams,
-                carbsGrams = slotMacro.carbsGrams,
-                fatGrams = slotMacro.fatGrams,
-                ingredients = listOf("80g $randomCarbs", "160g $randomProtein", "100g $randomVeg", "1 cucchiaio Olio EVO"),
-                recipeSteps = listOf("Cuoci $randomCarbs al dente.", "Spadella $randomProtein con $randomVeg in olio EVO ed unisci i componenti.")
-            ),
-            MealOption(
-                title = newTitle2,
-                description = "Alternativa fresca e gustosa rigenerata dall'AI.",
-                calories = slotMacro.calories,
-                proteinGrams = slotMacro.proteinGrams,
-                carbsGrams = slotMacro.carbsGrams,
-                fatGrams = slotMacro.fatGrams,
-                ingredients = listOf("75g $randomCarbs", "150g $randomProtein", "120g $randomVeg", "1 cucchiaio Olio EVO"),
-                recipeSteps = listOf("Griglia $randomProtein.", "Lessa $randomCarbs e mescola con $randomVeg ed olio a crudo.")
-            )
-        )
-    }
 }
-
-
