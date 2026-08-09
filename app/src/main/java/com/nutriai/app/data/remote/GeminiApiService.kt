@@ -64,8 +64,9 @@ class GeminiApiService {
         apiKey: String
     ): Result<List<MealOption>> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || apiKey == "YOUR_GEMINI_API_KEY_HERE") {
-            return@withContext Result.success(generateMockMealOptions(mealType, targetSlotMacro))
+            return@withContext Result.success(generateMockMealOptions(mealType, targetSlotMacro, profile))
         }
+
 
         runCatching {
             val prompt = buildSingleSlotPrompt(profile, targetSlotMacro, mealType)
