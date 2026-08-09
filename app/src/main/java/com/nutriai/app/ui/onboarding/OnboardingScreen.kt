@@ -111,7 +111,7 @@ fun OnboardingScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { currentStep / 4f },
+                progress = currentStep / 4f,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
@@ -119,6 +119,7 @@ fun OnboardingScreen(
                 color = EmeraldGreen,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -207,7 +208,7 @@ private fun StepPhysicalData(
         Text("Sesso", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Gender.values().forEach { gender ->
+            Gender.entries.forEach { gender ->
                 val selected = profile.gender == gender
                 Card(
                     modifier = Modifier
@@ -282,7 +283,7 @@ private fun StepPhysicalData(
         // Obiettivo
         Text("Il tuo Obiettivo", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        DietGoal.values().forEach { goal ->
+        DietGoal.entries.forEach { goal ->
             val selected = profile.goal == goal
             Card(
                 modifier = Modifier
@@ -323,7 +324,7 @@ private fun StepPhysicalData(
         // Attività
         Text("Stile di Vita & Attività", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        ActivityLevel.values().forEach { act ->
+        ActivityLevel.entries.forEach { act ->
             val selected = profile.activityLevel == act
             Card(
                 modifier = Modifier
@@ -386,7 +387,7 @@ private fun StepDietaryTypeAndAllergies(
 
         Text("Stile Alimentare", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        DietaryType.values().forEach { diet ->
+        DietaryType.entries.forEach { diet ->
             val selected = profile.dietaryType == diet
             Card(
                 modifier = Modifier
@@ -632,7 +633,7 @@ private fun StepMealSlots(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        MealType.values().forEach { mealType ->
+        MealType.entries.forEach { mealType ->
             val selected = profile.activeMealTypes.contains(mealType)
             Card(
                 modifier = Modifier

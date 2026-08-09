@@ -242,7 +242,7 @@ private fun MacroHeaderCard(
 
             val calProgress = (plan.totalCalories.toFloat() / target.calories.toFloat()).coerceIn(0f, 1f)
             LinearProgressIndicator(
-                progress = { calProgress },
+                progress = calProgress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(10.dp)
@@ -250,6 +250,7 @@ private fun MacroHeaderCard(
                 color = EmeraldGreen,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
