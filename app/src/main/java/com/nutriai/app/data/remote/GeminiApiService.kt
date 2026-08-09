@@ -160,7 +160,7 @@ class GeminiApiService {
         val randomSeed = Random.nextInt(1000, 9999)
         val mealSpecificInstruction = when (mealType) {
             MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi unicamente alimenti tipici da COLAZIONE della tradizione italiana (es. Porridge, Pancake proteici, Toast dolci o salati con uova/ricotta, Yogurt greco con frutta fresca/secca, Fette biscottate con marmellata, Cappuccino/latte vegetale). NON PROPORRE MAI PIATTI DA PRANZO O CENA (Tassativamente vietati gnocchi, pasta, riso salato, carne rossa/bianca, pesce a colazione!)."
-            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> "QUESTO PASTO È UNO SPUNTINO. Proponi unicamente spuntini spezza-fame italiani sani e veloci (es. Yogurt greco con mandorle/noci e frutto, tostino con affettato magro, parmigiano con frutto, frullato proteico). NON PROPORRE PIATTI DA PRANZO/CENA."
+            MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> "QUESTO PASTO È UNO SPUNTINO. Proponi unicamente spuntini spezza-fame italiani sani e veloci (es. Yogurt greco con mandorle/noci e frutto, tostino con affettato magro, parmigiano con frutto, frullato proteico). NON PROPORRE PIATTI DA PRANZO/CENA."
             MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi un primo piatto bilanciato o piatto unico della cucina italiana (es. Riso, Pasta integrale, Farro, Gnocchi, Polenta conditi con fonti proteiche e verdure)."
             MealType.DINNER -> "QUESTO PASTO È LA CENA. Proponi un secondo piatto proteico della cucina italiana (pesce, carne magra, uova) accompagnato da abbondanti verdure ed una fonte moderata di carboidrati (pane integrale, patate al forno, riso basmati)."
         }
@@ -418,7 +418,7 @@ class GeminiApiService {
                     recipeSteps = listOf("Tosta il pane integrale e spalma la ricotta con il miele a filo.")
                 )
             )
-            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> listOf(
+            MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> listOf(
                 MealOption(
                     title = "Yogurt Greco 0% con Mandorle e Mela",
                     description = "Spuntino spezza-fame saziante e ricco di proteine.",
@@ -540,7 +540,7 @@ class GeminiApiService {
                 ).shuffled()
                 breakfastPool.take(2)
             }
-            MealType.SNACK_MORNING, MealType.SNACK_AFTERNOON -> {
+            MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> {
                 val snackPool = listOf(
                     MealOption(
                         title = "Yogurt Greco 0% con Noci e Mela Croccante",
