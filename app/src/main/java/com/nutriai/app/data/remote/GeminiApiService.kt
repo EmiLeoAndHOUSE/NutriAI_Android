@@ -523,10 +523,12 @@ class GeminiApiService {
         )
     }
 
+    private fun generateRandomizedMockMealOptions(
         mealType: MealType,
         slotMacro: MacroTarget,
         profile: UserProfile
     ): List<MealOption> {
+
         val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi", "Farro", "Riso Venere", "Cuscus", "Patate dolce").shuffled().first()
         val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
         val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori", "Broccoli", "Asparagi", "Finocchi").shuffled().first()
