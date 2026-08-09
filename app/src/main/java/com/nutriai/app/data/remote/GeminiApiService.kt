@@ -49,9 +49,10 @@ class GeminiApiService {
         runCatching {
             val prompt = buildFullPlanPrompt(profile, target)
             val jsonResponseString = callGeminiApi(prompt, apiKey)
-            parseDailyPlanFromJson(jsonResponseString, target, profile.activeMealTypes)
+            parseDailyPlanFromJson(jsonResponseString, target, profile)
         }
     }
+
 
     /**
      * Rigenera le opzioni per un singolo pasto specificato.
@@ -216,7 +217,7 @@ class GeminiApiService {
     private fun parseDailyPlanFromJson(
         rawJson: String,
         target: MacroTarget,
-        activeMealTypes: List<MealType>
+        profile: UserProfile
     ): DailyMealPlan {
         val cleanJson = cleanJsonResponse(rawJson)
         val root = json.parseToJsonElement(cleanJson).jsonObject
@@ -238,7 +239,7 @@ class GeminiApiService {
         return DailyMealPlan(
             dateString = todayDate,
             target = target,
-            slots = if (slotPlans.isNotEmpty()) slotPlans else generateMockDailyPlanSlots(activeMealTypes, target)
+            slots = if (slotPlans.isNotEmpty()) slotPlans else generateMockDailyPlanSlots(profile.activeMealTypes, target, profile)
         )
     }
 
