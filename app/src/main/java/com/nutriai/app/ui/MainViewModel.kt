@@ -4,17 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nutriai.app.data.local.UserPreferencesRepository
-import com.nutriai.app.data.model.DailyMealPlan
 import com.nutriai.app.data.model.MacroTarget
 import com.nutriai.app.data.model.MealType
 import com.nutriai.app.data.model.UserProfile
+import com.nutriai.app.data.model.WeeklyMealPlan
 import com.nutriai.app.data.remote.GeminiApiService
 import com.nutriai.app.domain.calculator.NutritionalCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -28,8 +27,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _macroTarget = MutableStateFlow(NutritionalCalculator.calculateMacroTarget(UserProfile()))
     val macroTarget: StateFlow<MacroTarget> = _macroTarget.asStateFlow()
 
-    private val _dailyPlan = MutableStateFlow<DailyMealPlan?>(null)
-    val dailyPlan: StateFlow<DailyMealPlan?> = _dailyPlan.asStateFlow()
+    private val _weeklyPlan = MutableStateFlow<WeeklyMealPlan?>(null)
+    val weeklyPlan: StateFlow<WeeklyMealPlan?> = _weeklyPlan.asStateFlow()
 
     private val _apiKey = MutableStateFlow("")
     val apiKey: StateFlow<String> = _apiKey.asStateFlow()
@@ -58,8 +57,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             userPrefsRepository.isOnboardingCompletedFlow.collectLatest { completed ->
                 _isOnboardingCompleted.value = completed
-                if (completed && _dailyPlan.value == null) {
-                    generateDailyPlan()
+                if (completed && _weeklyPlan.value == null) {
+                    generateWeeklyPlan()
                 }
             }
         }
@@ -70,7 +69,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _userProfile.value = profile
             _macroTarget.value = NutritionalCalculator.calculateMacroTarget(profile)
             userPrefsRepository.saveUserProfile(profile)
-            generateDailyPlan()
+            generateWeeklyPlan()
         }
     }
 
@@ -81,53 +80,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun generateDailyPlan() {
+    fun generateWeeklyPlan() {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             val currentProfile = _userProfile.value
             val target = _macroTarget.value
 
-            val result = geminiApiService.generateDailyPlan(
+            val result = geminiApiService.generateWeeklyPlan(
                 profile = currentProfile,
                 target = target,
                 apiKey = _apiKey.value
             )
 
             result.onSuccess { plan ->
-                _dailyPlan.value = plan
+                _weeklyPlan.value = plan
             }.onFailure { err ->
-                _errorMessage.value = "Impossibile generare la giornata alimentare: ${err.localizedMessage}"
+                _errorMessage.value = "Impossibile generare la settimana alimentare: ${err.localizedMessage}"
             }
             _isLoading.value = false
         }
     }
 
+    fun selectDay(dayIndex: Int) {
+        val current = _weeklyPlan.value ?: return
+        if (dayIndex in current.days.indices) {
+            _weeklyPlan.value = current.copy(selectedDayIndex = dayIndex)
+        }
+    }
+
     fun selectMealOption(mealType: MealType, optionIndex: Int) {
-        val currentPlan = _dailyPlan.value ?: return
-        val updatedSlots = currentPlan.slots.map { slot ->
+        val currentPlan = _weeklyPlan.value ?: return
+        val currentDayIdx = currentPlan.selectedDayIndex
+        val activeDay = currentPlan.days.getOrNull(currentDayIdx) ?: return
+
+        val updatedSlots = activeDay.slots.map { slot ->
             if (slot.mealType == mealType) {
                 slot.copy(selectedOptionIndex = optionIndex)
             } else {
                 slot
             }
         }
-        _dailyPlan.value = currentPlan.copy(slots = updatedSlots)
+        val updatedDays = currentPlan.days.toMutableList()
+        updatedDays[currentDayIdx] = activeDay.copy(slots = updatedSlots)
+        _weeklyPlan.value = currentPlan.copy(days = updatedDays)
     }
 
     fun regenerateSlot(mealType: MealType) {
         viewModelScope.launch {
-            val currentPlan = _dailyPlan.value ?: return@launch
-            val slotToUpdate = currentPlan.slots.find { it.mealType == mealType } ?: return@launch
+            val currentPlan = _weeklyPlan.value ?: return@launch
+            val currentDayIdx = currentPlan.selectedDayIndex
+            val activeDay = currentPlan.days.getOrNull(currentDayIdx) ?: return@launch
 
             _isLoading.value = true
             val currentProfile = _userProfile.value
-            val numSlots = currentPlan.slots.size.coerceAtLeast(1)
+            val numSlots = activeDay.slots.size.coerceAtLeast(1)
             val slotTarget = MacroTarget(
-                calories = currentPlan.target.calories / numSlots,
-                proteinGrams = currentPlan.target.proteinGrams / numSlots,
-                carbsGrams = currentPlan.target.carbsGrams / numSlots,
-                fatGrams = currentPlan.target.fatGrams / numSlots
+                calories = activeDay.target.calories / numSlots,
+                proteinGrams = activeDay.target.proteinGrams / numSlots,
+                carbsGrams = activeDay.target.carbsGrams / numSlots,
+                fatGrams = activeDay.target.fatGrams / numSlots
             )
 
             val result = geminiApiService.regenerateMealSlot(
@@ -139,14 +151,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             result.onSuccess { newOptions ->
                 if (newOptions.isNotEmpty()) {
-                    val updatedSlots = currentPlan.slots.map { slot ->
+                    val updatedSlots = activeDay.slots.map { slot ->
                         if (slot.mealType == mealType) {
                             slot.copy(options = newOptions, selectedOptionIndex = 0)
                         } else {
                             slot
                         }
                     }
-                    _dailyPlan.value = currentPlan.copy(slots = updatedSlots)
+                    val updatedDays = currentPlan.days.toMutableList()
+                    updatedDays[currentDayIdx] = activeDay.copy(slots = updatedSlots)
+                    _weeklyPlan.value = currentPlan.copy(days = updatedDays)
                 }
             }.onFailure { err ->
                 _errorMessage.value = "Impossibile rigenerare il pasto: ${err.localizedMessage}"
@@ -162,7 +176,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetOnboarding() {
         viewModelScope.launch {
             userPrefsRepository.resetOnboarding()
-            _dailyPlan.value = null
+            _weeklyPlan.value = null
         }
     }
 }

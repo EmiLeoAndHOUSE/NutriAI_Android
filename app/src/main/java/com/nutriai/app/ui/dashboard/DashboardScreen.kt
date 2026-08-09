@@ -2,7 +2,6 @@ package com.nutriai.app.ui.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,14 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +38,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -58,12 +57,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nutriai.app.data.model.DailyMealPlan
+import com.nutriai.app.data.model.DayOfWeekPlan
 import com.nutriai.app.data.model.MacroTarget
 import com.nutriai.app.data.model.MealOption
 import com.nutriai.app.data.model.MealSlotPlan
 import com.nutriai.app.data.model.MealType
 import com.nutriai.app.data.model.UserProfile
+import com.nutriai.app.data.model.WeeklyMealPlan
 import com.nutriai.app.ui.theme.AccentBlue
 import com.nutriai.app.ui.theme.AccentOrange
 import com.nutriai.app.ui.theme.AccentPurple
@@ -74,14 +74,17 @@ import com.nutriai.app.ui.theme.EmeraldGreen
 fun DashboardScreen(
     userProfile: UserProfile,
     macroTarget: MacroTarget,
-    dailyPlan: DailyMealPlan?,
+    weeklyPlan: WeeklyMealPlan?,
     isLoading: Boolean,
+    onSelectDay: (Int) -> Unit,
     onRefreshPlan: () -> Unit,
     onSelectOption: (MealType, Int) -> Unit,
     onRegenerateSlot: (MealType) -> Unit,
     onOpenSettings: () -> Unit,
     onEditProfile: () -> Unit
 ) {
+    val activeDay = weeklyPlan?.currentDay
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,7 +96,7 @@ fun DashboardScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = dailyPlan?.dateString ?: "Giornata Alimentare",
+                            text = "Piano Settimanale Personalizzato",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -103,7 +106,7 @@ fun DashboardScreen(
                     IconButton(onClick = onRefreshPlan) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Rigenera Giornata",
+                            contentDescription = "Rigenera Settimana",
                             tint = EmeraldGreen
                         )
                     }
@@ -132,7 +135,7 @@ fun DashboardScreen(
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (isLoading && dailyPlan == null) {
+            if (isLoading && weeklyPlan == null) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -141,17 +144,17 @@ fun DashboardScreen(
                     CircularProgressIndicator(color = EmeraldGreen, modifier = Modifier.size(56.dp))
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Generazione menu personalizzato in corso...",
+                        text = "Generazione piano settimanale in corso...",
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Gemini AI sta bilanciando ricette e grammature...",
+                        text = "Gemini AI sta creando 7 giorni di ricette italiane trasparenti e varie...",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else if (dailyPlan != null) {
+            } else if (weeklyPlan != null && activeDay != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -160,24 +163,67 @@ fun DashboardScreen(
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Macro Header Card
+                    // Selettore dei Giorni della Settimana (Lunedì - Domenica)
+                    ScrollableTabRow(
+                        selectedTabIndex = weeklyPlan.selectedDayIndex,
+                        edgePadding = 0.dp,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = EmeraldGreen,
+                        modifier = Modifier.clip(RoundedCornerShape(14.dp))
+                    ) {
+                        weeklyPlan.days.forEachIndexed { index, dayPlan ->
+                            Tab(
+                                selected = weeklyPlan.selectedDayIndex == index,
+                                onClick = { onSelectDay(index) },
+                                text = {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = dayPlan.dayName,
+                                            fontWeight = if (weeklyPlan.selectedDayIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                            fontSize = 14.sp
+                                        )
+                                        Text(
+                                            text = dayPlan.dateString,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (weeklyPlan.selectedDayIndex == index) EmeraldGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Card del Target e Avanzamento Macro del giorno selezionato
                     MacroHeaderCard(
                         target = macroTarget,
-                        plan = dailyPlan,
+                        dayPlan = activeDay,
                         profile = userProfile
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Text(
-                        text = "I Tuoi Pasti del Giorno 🍽️",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Pasti di ${activeDay.dayName} 🍽️",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = activeDay.dateString, style = MaterialTheme.typography.bodySmall, color = EmeraldGreen, fontWeight = FontWeight.Bold)
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    dailyPlan.slots.forEach { slot ->
+                    activeDay.slots.forEach { slot ->
                         MealSlotCard(
                             slotPlan = slot,
                             onSelectOption = { idx -> onSelectOption(slot.mealType, idx) },
@@ -197,7 +243,7 @@ fun DashboardScreen(
 @Composable
 private fun MacroHeaderCard(
     target: MacroTarget,
-    plan: DailyMealPlan,
+    dayPlan: DayOfWeekPlan,
     profile: UserProfile
 ) {
     Card(
@@ -215,12 +261,12 @@ private fun MacroHeaderCard(
             ) {
                 Column {
                     Text(
-                        text = "Target Calorico Giornaliero",
+                        text = "Target Calorico (${dayPlan.dayName})",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${plan.totalCalories} / ${target.calories} kcal",
+                        text = "${dayPlan.totalCalories} / ${target.calories} kcal",
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                         color = EmeraldGreen
                     )
@@ -240,7 +286,7 @@ private fun MacroHeaderCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            val calProgress = (plan.totalCalories.toFloat() / target.calories.toFloat()).coerceIn(0f, 1f)
+            val calProgress = (dayPlan.totalCalories.toFloat() / target.calories.toFloat()).coerceIn(0f, 1f)
             LinearProgressIndicator(
                 progress = calProgress,
                 modifier = Modifier
@@ -251,17 +297,15 @@ private fun MacroHeaderCard(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Macro Breakdown Pills
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MacroPill(
                     label = "Proteine",
-                    current = plan.totalProtein,
+                    current = dayPlan.totalProtein,
                     target = target.proteinGrams,
                     unit = "g",
                     color = AccentOrange,
@@ -269,7 +313,7 @@ private fun MacroHeaderCard(
                 )
                 MacroPill(
                     label = "Carboidrati",
-                    current = plan.totalCarbs,
+                    current = dayPlan.totalCarbs,
                     target = target.carbsGrams,
                     unit = "g",
                     color = AccentBlue,
@@ -277,7 +321,7 @@ private fun MacroHeaderCard(
                 )
                 MacroPill(
                     label = "Grassi",
-                    current = plan.totalFat,
+                    current = dayPlan.totalFat,
                     target = target.fatGrams,
                     unit = "g",
                     color = AccentPurple,
@@ -335,7 +379,6 @@ private fun MealSlotCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header pasto
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -364,7 +407,6 @@ private fun MealSlotCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Selettore opzione 1 vs opzione 2
             if (slotPlan.options.size > 1) {
                 TabRow(
                     selectedTabIndex = slotPlan.selectedOptionIndex,
@@ -390,7 +432,6 @@ private fun MealSlotCard(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Dettagli opzione attiva
             activeOption?.let { option ->
                 Text(
                     text = option.title,
@@ -405,7 +446,6 @@ private fun MealSlotCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Macro riga
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("P: ${option.proteinGrams}g", style = MaterialTheme.typography.labelMedium, color = AccentOrange)
                     Text("C: ${option.carbsGrams}g", style = MaterialTheme.typography.labelMedium, color = AccentBlue)
@@ -414,7 +454,6 @@ private fun MealSlotCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Ingredienti
                 Text("Ingredienti:", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 option.ingredients.forEach { ing ->
                     Text(text = "• $ing", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -422,7 +461,6 @@ private fun MealSlotCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Ricetta Espandibile
                 if (option.recipeSteps.isNotEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -461,7 +499,6 @@ private fun MealSlotCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Pulsante Rigenera Pasto con AI
             OutlinedButton(
                 onClick = onRegenerateSlot,
                 modifier = Modifier.fillMaxWidth(),

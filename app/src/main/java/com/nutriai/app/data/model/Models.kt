@@ -91,8 +91,8 @@ data class MealSlotPlan(
 }
 
 @Serializable
-data class DailyMealPlan(
-    val id: String = java.util.UUID.randomUUID().toString(),
+data class DayOfWeekPlan(
+    val dayName: String, // es. "Lunedì", "Martedì", ecc.
     val dateString: String,
     val target: MacroTarget,
     val slots: List<MealSlotPlan>
@@ -109,3 +109,14 @@ data class DailyMealPlan(
     val totalFat: Int
         get() = slots.mapNotNull { it.selectedOption?.fatGrams }.sum()
 }
+
+@Serializable
+data class WeeklyMealPlan(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val days: List<DayOfWeekPlan>,
+    val selectedDayIndex: Int = 0
+) {
+    val currentDay: DayOfWeekPlan?
+        get() = days.getOrNull(selectedDayIndex)
+}
+

@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
 fun NutriAppContent(viewModel: MainViewModel) {
     val userProfile by viewModel.userProfile.collectAsState()
     val macroTarget by viewModel.macroTarget.collectAsState()
-    val dailyPlan by viewModel.dailyPlan.collectAsState()
+    val weeklyPlan by viewModel.weeklyPlan.collectAsState()
     val apiKey by viewModel.apiKey.collectAsState()
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -85,9 +85,10 @@ fun NutriAppContent(viewModel: MainViewModel) {
                     DashboardScreen(
                         userProfile = userProfile,
                         macroTarget = macroTarget,
-                        dailyPlan = dailyPlan,
+                        weeklyPlan = weeklyPlan,
                         isLoading = isLoading,
-                        onRefreshPlan = { viewModel.generateDailyPlan() },
+                        onSelectDay = { dayIdx -> viewModel.selectDay(dayIdx) },
+                        onRefreshPlan = { viewModel.generateWeeklyPlan() },
                         onSelectOption = { mealType, idx -> viewModel.selectMealOption(mealType, idx) },
                         onRegenerateSlot = { mealType -> viewModel.regenerateSlot(mealType) },
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
