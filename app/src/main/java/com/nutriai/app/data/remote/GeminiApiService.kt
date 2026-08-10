@@ -40,7 +40,7 @@ class GeminiApiService {
     private val dayNames = listOf("Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica")
 
     /**
-     * Genera l'intero piano settimanale (7 giorni) tramite Gemini API o Engine tradizionali della cucina italiana.
+     * Genera l'intero piano settimanale (7 giorni) tramite Gemini API o Engine 100% Tradizione Italiana.
      */
     suspend fun generateWeeklyPlan(
         profile: UserProfile,
@@ -81,7 +81,7 @@ class GeminiApiService {
     }
 
     /**
-     * Rigenera le opzioni per un singolo pasto specificato garantendo ricette rigorosamente adatte a quel momento della giornata.
+     * Rigenera le opzioni per un singolo pasto specificato garantendo ricette 100% della tradizione italiana.
      */
     suspend fun regenerateMealSlot(
         profile: UserProfile,
@@ -107,7 +107,7 @@ class GeminiApiService {
         val allergiesStr = if (profile.allergies.isNotEmpty()) profile.allergies.joinToString(", ") else "Nessuna"
 
         return """
-            Sei un esperto chef di alta cucina tradizionale italiana ed un nutrizionista clinico. Genera un PIANO ALIMENTARE SETTIMANALE COMPLETO (da Lunedì a Domenica, 7 giorni) in formato JSON.
+            Sei un grande Chef della tradizione culinaria italiana ed un nutrizionista esperto. Genera un PIANO ALIMENTARE SETTIMANALE COMPLETO (da Lunedì a Domenica, 7 giorni) in formato JSON.
             PARAMETRI UTENTE:
             - Calorie Target Giornaliere: ${target.calories} kcal
             - Proteine Target: ${target.proteinGrams}g
@@ -115,24 +115,18 @@ class GeminiApiService {
             - Grassi Target: ${target.fatGrams}g
             - Stile Alimentare: ${profile.dietaryType.label}
             - ALLERGIE/INTOLLERANZE (RIGOROSAMENTE VIETATE): $allergiesStr
-            - CIBI GRADITI SELEZIONATI DALL'UTENTE (USA RIGOROSAMENTE QUESTI INGREDIENTI): $likedStr
+            - CIBI GRADITI SELEZIONATI (USA RIGOROSAMENTE QUESTI INGREDIENTI ITALIANI): $likedStr
             - CIBI SGRADITI (DA ESCLUDERE TASSATIVAMENTE): $dislikedStr
             - Pasti richiesti per giorno: ${profile.activeMealTypes.joinToString { it.name }}
 
-            REGOLE FONDAMENTALI SULLA TRADIZIONE ITALIANA AUTENTICA:
-            1. COLAZIONE (BREAKFAST): Usa UNICAMENTE COLAZIONI TRADIZIONALI ITALIANE AUTENTICHE!
-               - Cappuccino schiumato con Fette biscottate integrali, Burro di centrifuga e Marmellata/Miele
-               - Caffellatte con Biscotti integrali da inzuppo e Spremuta d'arancia fresca
-               - Ciambellone casereccio allo yogurt o Torta Margherita/Crostata casereccia alla frutta
-               - Pane di grano duro tostato con Ricotta magra e Miele d'acacia
-               - Yogurt bianco/greco con Muesli croccante integrale e Fragole o Mela
-               - Toast salato con Prosciutto cotto di alta qualità e Mozzarella fiordilatte
-               * DIVIETO ASSOLUTO: È TASSATIVAMENTE VIETATO PROPORRE PORRIDGE DI AVENA O PANCAKE ANGLOSASSONI A COLAZIONE!
-            2. SPUNTINI (MORNING_SNACK / AFTERNOON_SNACK): Solo spuntini spezza-fame sani italiani (Yogurt greco, frutta fresca, tostino con affettato magro, parmigiano).
-            3. PRANZO (LUNCH): Primi piatti tradizionali o piatti unici (Pasta al pomodoro e basilico, Riso Basmati/Venere con pollo/tacchino, Gnocchi di patate al pomodoro e mozzarella, Farro con verdure e tonno, Polenta morbida con ragù magro).
-            4. CENA (DINNER): Secondi piatti della cucina italiana (Filetto di Spigola/Orata al cartoccio, Scaloppine al limone, Tagliata di pollo o tacchino, Omelette alle erbe) con abbondante contorno di verdure e pane integrale/patate al forno.
-            5. OGNI SINGOLO INGREDIENTE NELLA LISTA "ingredients" DEVE AVERE IL PESO ESATTO IN GRAMMI (g) O MILLILITRI (ml) (es. "150g Petto di pollo", "80g Pasta integrale", "10g Olio extravergine d'oliva", "150ml Latte scremato"). MAI USARE TERMINI SENZA DOSI COME "q.b.", "dose calibrata", "1 cucchiaio".
-            6. NESSUN CONDIMENTO INCOERENTE (MAI olio EVO nel caffè, latte o colazioni dolci!).
+            REGOLE IMPERATIVE PER LA TRADIZIONE CULINARIA ITALIANA AUTENTICA IN TUTTI I PASTI:
+            1. OGNI SINGOLO PASTO (COLAZIONE, SPUNTINO MATTINA, PRANZO, SPUNTINO POMERIGGIO, CENA) DEVE ESSERE RIGOROSAMENTE E 100% UNA RICETTA DELLA TRADIZIONE REGIONALE ITALIANA!
+               - COLAZIONE (BREAKFAST): Cappuccino schiumato, Caffellatte con fette biscottate e marmellata/miele, Biscotti integrali da inzuppo, Ciambellone casereccio allo yogurt, Crostata alla confettura, Toast prosciutto cotto e mozzarella, Pane tostato con ricotta magra e miele. (TASSATIVAMENTE VIETATI PORRIDGE O PANCAKE ANGLOSASSONI!).
+               - SPUNTINO (MORNING_SNACK / AFTERNOON_SNACK): Pane casereccio con Bresaola della Valtellina o Prosciutto Crudo di Parma, Parmigiano Reggiano/Grana Padano con noci o mela, Ricotta con miele e mandorle.
+               - PRANZO (LUNCH): Primi piatti o piatti unici tradizionali italiani (Pasta al pomodoro e basilico fresco con parmigiano e petto di pollo, Risotto ai funghi o zucchine con fesa di tacchino, Gnocchi di patate alla sorrentina, Farro integrale con verdure e tonno, Polenta morbida con ragù magro di bovino).
+               - CENA (DINNER): Secondi piatti della tradizione italiana (Filetto di Spigola/Orata al cartoccio con patate al forno ed insalata, Scaloppine al limone, Tagliata di pollo o tacchino al rosmarino, Merluzzo alla livornese, Omelette alla siciliana alle erbe).
+            2. OGNI INGREDIENTE IN "ingredients" DEVE AVERE LA QUANTITÀ ESATTA ESPRESSA IN GRAMMI (g) O MILLILITRI (ml) (es. "150g Petto di pollo", "80g Pasta integrale", "10g Olio extravergine d'oliva", "150ml Latte scremato"). MAI USARE TERMINI GENERICI O SENZA DOSI.
+            3. MAI METTERE CONDIMENTI INCOERENTI (es. MAI olio EVO nel caffè, nel latte o nelle colazioni dolci!).
 
             REQUISITI FORMATO RISPOSTA JSON:
             Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
@@ -166,10 +160,10 @@ class GeminiApiService {
     private fun buildSingleSlotPrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType): String {
         val randomSeed = Random.nextInt(1000, 9999)
         val mealSpecificInstruction = when (mealType) {
-            MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi alimenti da COLAZIONE TRADIZIONALE ITALIANA AUTENTICA (Cappuccino, Caffellatte, Fette biscottate con marmellata/miele, Biscotti integrali da inzuppo, Ciambellone casereccio allo yogurt, Crostata alla confettura, Toast prosciutto cotto e mozzarella). TASSATIVAMENTE VIETATI porridge anglosassone, pancake americani, gnocchi, pasta, riso salato, carne o pesce a colazione!"
-            MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> "QUESTO PASTO È UNO SPUNTINO. Proponi unicamente spuntini spezza-fame italiani sani e veloci (Yogurt greco con mandorle/noci e frutto, tostino con affettato magro, parmigiano con frutto, frullato proteico). NON PROPORRE PIATTI DA PRANZO/CENA."
-            MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi un primo piatto bilanciato o piatto unico della cucina italiana (Riso, Pasta integrale, Farro, Gnocchi, Polenta conditi con fonti proteiche magre e verdure)."
-            MealType.DINNER -> "QUESTO PASTO È LA CENA. Proponi un secondo piatto proteico della cucina italiana (pesce, carne magra, uova) accompagnato da verdure ed una fonte moderata di carboidrati (pane integrale, patate al forno)."
+            MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi UNICAMENTE ricette della COLAZIONE TRADIZIONALE ITALIANA AUTENTICA (Cappuccino, Caffellatte, Fette biscottate integrali con marmellata/miele, Biscotti integrali da inzuppo, Ciambellone casereccio allo yogurt, Crostata alla confettura, Toast prosciutto cotto e mozzarella). TASSATIVAMENTE VIETATI porridge anglosassone, pancake americani, gnocchi, pasta, riso salato, carne o pesce a colazione!"
+            MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> "QUESTO PASTO È UNO SPUNTINO. Proponi UNICAMENTE spuntini della tradizione italiana (Pane casereccio con Bresaola della Valtellina o Prosciutto Crudo di Parma, Parmigiano Reggiano con noci o mela, Ricotta con miele e mandorle, Yogurt naturale italiano). NON PROPORRE MAI PIATTI STRANIERI O DA PRANZO/CENA."
+            MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi UNICAMENTE primi piatti o piatti unici tradizionali della cucina italiana (Pasta al pomodoro fresco, Risotto ai funghi o zucchine, Gnocchi di patate alla sorrentina, Farro integrale con verdure e tonno, Polenta morbida con ragù magro)."
+            MealType.DINNER -> "QUESTO PASTO È LA CENA. Proponi UNICAMENTE secondi piatti della tradizione italiana (Filetto di Spigola/Orata al cartoccio, Scaloppine al limone, Merluzzo alla livornese, Omelette alle erbe) con abbondante contorno di verdure e pane di grano duro o patate al forno."
         }
 
         return """
@@ -195,7 +189,7 @@ class GeminiApiService {
     private fun buildCustomDesirePrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType, userDesire: String): String {
         return """
             L'utente ha espresso il desiderio specifico di mangiare: "$userDesire" per il pasto ${mealType.label} (${mealType.name}).
-            Crea un piatto sano e bilanciato che soddisfi questa richiesta e rispetti al grammo i seguenti macro target per questo pasto:
+            Crea un piatto sano e bilanciato della tradizione italiana che soddisfi questa richiesta e rispetti al grammo i seguenti macro target per questo pasto:
             - Calorie: ~${slotTarget.calories} kcal
             - Proteine: ~${slotTarget.proteinGrams}g
             - Carboidrati: ~${slotTarget.carbsGrams}g
@@ -203,7 +197,7 @@ class GeminiApiService {
             - ALLERGIE DA EVITARE: ${profile.allergies.joinToString().ifEmpty { "Nessuna" }}
 
             REGOLE IMPERATIVE:
-            1. OGNI SINGOLO INGREDIENTE IN "ingredients" DEVE AVERE IL PESO ESATTO ESPRESSO IN GRAMMI (g) O MILLILITRI (ml) (es. "120g Farina d'avena", "150ml Albumi", "10g Cacao amaro").
+            1. OGNI SINGOLO INGREDIENTE IN "ingredients" DEVE AVERE IL PESO ESATTO ESPRESSO IN GRAMMI (g) O MILLILITRI (ml) (es. "120g Pane di grano duro", "50g Prosciutto cotto", "150ml Spremuta d'arancia").
             2. LA PREPARAZIONE "recipeSteps" DEVE ESSERE PERFETTAMENTE INERENTE A "$userDesire" E AGLI INGREDIENTI INDICATI. MAI INGREDIENTI O CONDIMENTI STRANI O INCOERENTI (es. MAI olio EVO nel caffè/latte).
 
             Rispondi ESCLUSIVAMENTE con un array JSON contenente 1 oggetto MealOption:
@@ -215,7 +209,7 @@ class GeminiApiService {
                 "proteinGrams": ${slotTarget.proteinGrams},
                 "carbsGrams": ${slotTarget.carbsGrams},
                 "fatGrams": ${slotTarget.fatGrams},
-                "ingredients": ["120g Pane di grano duro", "50g Prosciutto cotto", "150ml Spremuta d'arancia"],
+                "ingredients": ["120g Pane di grano duro", "50g Prosciutto cotto di alta qualità", "150ml Spremuta d'arancia"],
                 "recipeSteps": ["Step 1 di preparazione coerente", "Step 2 di cottura coerente"]
               }
             ]
@@ -437,7 +431,7 @@ class GeminiApiService {
                     ),
                     MealOption(
                         title = "Ciambellone Casereccio allo Yogurt e Cappuccino",
-                        description = "Dolce soffice preparato con ingredienti sani e genuini.",
+                        description = "Dolce soffice preparato con ingredienti sani e genuini della nostra tradizione.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
                         ingredients = listOf("60g Ciambellone casereccio allo yogurt", "200ml Latte parzialmente scremato", "50ml Caffè espresso", "100g Mela fresca"),
                         recipeSteps = listOf(
@@ -447,7 +441,7 @@ class GeminiApiService {
                         )
                     ),
                     MealOption(
-                        title = "Toast Salato con Prosciutto Cotto, Mozzarella e Spremuta d'Arancia",
+                        title = "Toast Salato con Prosciutto Cotto di Alta Qualità, Mozzarella e Spremuta d'Arancia",
                         description = "Colazione salata della tradizione italiana.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
                         ingredients = listOf("50g Pane di grano duro tostato", "40g Prosciutto cotto di alta qualità", "30g Mozzarella fiordilatte", "150ml Spremuta d'arancia fresca"),
@@ -462,109 +456,127 @@ class GeminiApiService {
             }
             MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> listOf(
                 MealOption(
-                    title = "Yogurt Greco 0% con Mandorle e Mela",
-                    description = "Spuntino spezza-fame fresco, saziante e ricco di proteine.",
+                    title = "Pane Casereccio con Bresaola della Valtellina e Parmigiano Reggiano",
+                    description = "Spuntino spezza-fame salato e proteico della tradizione italiana.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("170g Yogurt Greco 0%", "15g Mandorle sgusciate", "150g Mela a cubetti"),
+                    ingredients = listOf("40g Pane casereccio di grano duro", "50g Bresaola della Valtellina", "15g Scaglie di Parmigiano Reggiano", "5g Olio extravergine d'oliva"),
                     recipeSteps = listOf(
-                        "Versa 170g di yogurt greco 0% in una ciotola.",
-                        "Taglia 150g di mela fresca a cubetti ed unisci allo yogurt.",
-                        "Completa aggiungendo 15g di mandorle sgusciate tritate al momento."
+                        "Tosta leggermente 40g di pane casereccio di grano duro.",
+                        "Disponi 50g di bresaola della Valtellina e 15g di scaglie di parmigiano reggiano sul pane.",
+                        "Condisci con 5g di olio extravergine d'oliva a crudo."
                     )
                 ),
                 MealOption(
-                    title = "Tostino Integrale con Bresaola e Rucola",
-                    description = "Spuntino salato veloce ed ad alto tenore proteico.",
+                    title = "Parmigiano Reggiano con Noci Italiane e Mela Fresca",
+                    description = "Spuntino spezza-fame fresco, genuino e saziante.",
                     calories = slotMacro.calories,
                     proteinGrams = slotMacro.proteinGrams,
                     carbsGrams = slotMacro.carbsGrams,
                     fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("40g Pane integrale", "50g Bresaola della Valtellina", "20g Rucola fresca", "10g Olio extravergine d'oliva"),
+                    ingredients = listOf("30g Parmigiano Reggiano stagionato", "15g Noci italiane sgusciate", "150g Mela fresca a fette"),
                     recipeSteps = listOf(
-                        "Tosta leggermente 40g di pane integrale.",
-                        "Disponi 50g di bresaola e 20g di rucola fresca sul pane.",
-                        "Condisci la rucola con 10g di olio extravergine d'oliva a crudo."
+                        "Taglia 30g di Parmigiano Reggiano in scaglie.",
+                        "Lava e taglia 150g di mela fresca a fette.",
+                        "Gusta il parmigiano ed i pezzetti di mela con 15g di noci italiane sgusciate."
                     )
                 )
             )
             MealType.LUNCH -> {
-                val carbsList = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro integrale", "Riso Venere")
-                val proteinList = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Uova strapazzate", "Bresaola")
-                val dayCarb = carbsList.getOrElse(dayIndex % carbsList.size) { "Pasta Integrale" }
-                val dayProtein = proteinList.getOrElse(dayIndex % proteinList.size) { "Petto di Pollo" }
-
-                listOf(
+                val pastaOptions = listOf(
                     MealOption(
-                        title = "$dayCarb al Pomodoro Fresco con $dayProtein e Zucchine",
-                        description = "Pranzo completo ed equilibrato della cucina tradizionale italiana.",
+                        title = "Pasta Integrale al Pomodoro Fresco e Basilico con Petto di Pollo",
+                        description = "Il primo piatto simbolo della tradizione italiana bilanciato con proteine magre.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
                         fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("80g $dayCarb", "160g $dayProtein", "150g Zucchine fresche", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("80g Pasta integrale", "160g Petto di pollo a straccetti", "150g Pomodori pelati italiani", "10g Olio extravergine d'oliva", "10g Parmigiano Reggiano"),
                         recipeSteps = listOf(
-                            "Porta ad ebollizione una pentola d'acqua salata e cuoci 80g di $dayCarb per il tempo indicato sulla confezione.",
-                            "Taglia 150g di zucchine a rondelle e 160g di $dayProtein a dadini.",
-                            "Scalda 10g di olio extravergine d'oliva in padella e rosola il $dayProtein con le zucchine per 8-10 minuti.",
-                            "Scola il $dayCarb al dente, uniscilo in padella con il condimento e salta per 1 minuto prima di servire."
+                            "Porta ad ebollizione una pentola d'acqua salata e cuoci 80g di pasta integrale per il tempo indicato.",
+                            "Cuoci 160g di petto di pollo a straccetti in padella con 10g di olio EVO e 150g di pomodoro fresco per 8 minuti.",
+                            "Scola la pasta al dente, salta in padella con il condimento e servire con una spolverata di 10g di Parmigiano Reggiano e basilico."
                         )
                     ),
                     MealOption(
-                        title = "Insalata Fredda di Farro con Fesa di Tacchino e Pomodorini",
-                        description = "Alternativa fresca e ricca di nutrienti per il pranzo.",
+                        title = "Risotto ai Funghi Porcini e Zucchine con Fesa di Tacchino",
+                        description = "Primo piatto ricco e cremoso della tradizione del nord Italia.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
                         fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("70g Farro integrale", "150g Fesa di Tacchino", "120g Pomodorini ciliegino", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("80g Riso Carnaroli/Basmati", "150g Fesa di Tacchino a dadini", "100g Funghi porcini/zucchine", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Cuoci 70g di farro in abbondante acqua salata per 15 minuti, poi scola e lascia intiepidire.",
-                            "Griglia 150g di fesa di tacchino su una piastra per 3 minuti per lato e tagliala a listarelle.",
-                            "In una ciotola unisci il farro, il tacchino ed 120g di pomodorini tagliati a metà.",
-                            "Condisci con 10g di olio extravergine d'oliva a crudo ed origano."
+                            "Tosta 80g di riso in padella con 10g di olio extravergine d'oliva e 100g di funghi/zucchine.",
+                            "Aggiungi gradualmente brodo vegetale caldo mescolando per 15-18 minuti.",
+                            "Unisci 150g di fesa di tacchino negli ultimi 5 minuti di cottura e servire ben caldo."
+                        )
+                    ),
+                    MealOption(
+                        title = "Gnocchi di Patate alla Sorrentina con Pomodoro, Basilico e Fiordilatte",
+                        description = "Piatto tradizionale campano dal sapore inimitabile.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("150g Gnocchi di patate freschi", "120g Macinato magro di bovino", "150g Passata di pomodoro italiano", "30g Mozzarella fiordilatte", "10g Olio extravergine d'oliva"),
+                        recipeSteps = listOf(
+                            "Prepara un sugo leggero rosolando 120g di macinato magro con 150g di passata ed 10g di olio EVO.",
+                            "Lessa 150g di gnocchi di patate in acqua salata e scolali appena salgono a galla.",
+                            "Condisci gli gnocchi con il sugo e 30g di fiordilatte a cubetti e passa in forno per 5 minuti a far fondere la mozzarella."
                         )
                     )
                 )
+                pastaOptions.subList(dayIndex % 2, (dayIndex % 2) + 2)
             }
             MealType.DINNER -> {
-                val proteinList = listOf("Filetto di Spigola", "Petto di Tacchino", "Tagliata di Pollo", "Omelette alle Erbe")
-                val dayProtein = if (likesSalmon && dayIndex == 4) "Salmone Fresco al Cartoccio" else proteinList.getOrElse(dayIndex % proteinList.size) { "Filetto di Spigola" }
-
-                listOf(
+                val dinnerOptions = listOf(
                     MealOption(
-                        title = "$dayProtein al Cartoccio con Insalata e Pane Integrale",
-                        description = "Cena leggera e ad alta digeribilità.",
+                        title = "Filetto di Orata al Cartoccio con Patate al Forno ed Insalata Mista",
+                        description = "Secondo piatto di pesce raffinato ed altamente digeribile.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
                         fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("180g $dayProtein", "150g Insalata mista", "60g Pane integrale", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("180g Filetto di Orata fresca", "120g Patate novelle", "150g Insalata mista", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Disponi 180g di $dayProtein su un foglio di carta da forno con un rametto di rosmarino ed un pizzico di sale.",
-                            "Chiudi il cartoccio ed inforna a 180°C per 15-18 minuti.",
-                            "Lava 150g di insalata mista e condiscila con 10g di olio extravergine d'oliva.",
-                            "Servi il $dayProtein caldo accompagnato dall'insalata e da 60g di pane integrale."
+                            "Disponi 180g di filetto di orata su carta da forno con un rametto di rosmarino ed 100g di patate a fettine sottili.",
+                            "Chiudi il cartoccio ed inforna a 180°C per 18 minuti.",
+                            "Condisci 150g di insalata mista fresca con 10g di olio extravergine d'oliva a crudo e servi con il pesce caldo."
                         )
                     ),
                     MealOption(
-                        title = "Omelette alle Erbe con Verdure Grigliate e Pane Integrale",
-                        description = "Cena rapida e proteica della tradizione italiana.",
+                        title = "Scaloppine di Petto di Tacchino al Limone con Verdure Grigliate e Pane Integrale",
+                        description = "Classico secondo piatto italiano profumato agli agrumi.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
                         fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("120g Uova (2 uova intere)", "100ml Albumi d'uovo", "150g Melanzane e Zucchine grigliate", "50g Pane integrale", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("170g Petto di Tacchino", "Succo di 1 limone fresco", "150g Zucchine e Melanzane grigliate", "60g Pane integrale", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Sbatti 120g di uova con 100ml di albumi ed erbe aromatiche.",
-                            "Scalda 5g di olio extravergine d'oliva in padella antiaderente e versa il composto cuocendo per 3 minuti per lato.",
-                            "Griglia 150g di melanzane e zucchine e condisci con i restanti 5g di olio extravergine d'oliva.",
-                            "Servi l'omelette ben calda con le verdure ed 50g di pane integrale tostato."
+                            "Infarina leggermente 170g di petto di tacchino e cuoci in padella con 5g di olio EVO per 3 minuti per lato.",
+                            "Sfuma con il succo di 1 limone fresco creando una cremina morbida.",
+                            "Griglia 150g di verdure ed ungi con i restanti 5g di olio EVO, servendo con 60g di pane integrale."
+                        )
+                    ),
+                    MealOption(
+                        title = "Merluzzo alla Livornese con Pomodorini, Capperi, Olive e Pane di Grano Duro",
+                        description = "Ricetta tradizionale toscana ricca di sapore e genuinità.",
+                        calories = slotMacro.calories,
+                        proteinGrams = slotMacro.proteinGrams,
+                        carbsGrams = slotMacro.carbsGrams,
+                        fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("180g Cuore di Merluzzo", "150g Pomodorini ciliegino", "15g Olive nere", "5g Capperi", "60g Pane di grano duro", "10g Olio extravergine d'oliva"),
+                        recipeSteps = listOf(
+                            "In una padella cuoci 150g di pomodorini tagliati con 15g di olive, 5g di capperi ed 10g di olio EVO per 5 minuti.",
+                            "Adagia 180g di filetto di merluzzo nel sugo e copri con coperchio lasciando cuocere a fuoco lento per 10 minuti.",
+                            "Servi il merluzzo ricoperto dal suo intingolo saporito accompagnato da 60g di pane tostato."
                         )
                     )
                 )
+                dinnerOptions.subList(dayIndex % 2, (dayIndex % 2) + 2)
             }
         }
     }
@@ -629,97 +641,101 @@ class GeminiApiService {
             MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> {
                 val snackPool = listOf(
                     MealOption(
-                        title = "Yogurt Greco 0% con Noci e Mela Croccante",
-                        description = "Spuntino spezza-fame ad alto potere saziante.",
+                        title = "Pane Casereccio con Bresaola della Valtellina e Parmigiano Reggiano",
+                        description = "Spuntino spezza-fame salato e proteico della tradizione italiana.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("170g Yogurt Greco 0%", "15g Noci", "150g Mela fresca"),
+                        ingredients = listOf("40g Pane casereccio di grano duro", "50g Bresaola della Valtellina", "15g Scaglie di Parmigiano Reggiano", "5g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Versa 170g di yogurt greco 0% in una ciotola.",
-                            "Aggiungi 150g di mela fresca a cubetti e 15g di noci tritate."
-                        )
-                    ),
-                    MealOption(
-                        title = "Tostino Integrale con Bresaola e Scaglie di Parmigiano",
-                        description = "Spuntino salato rapido ricchissimo di proteine.",
-                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("40g Pane integrale", "50g Bresaola della Valtellina", "10g Scaglie di Parmigiano Reggiano", "5g Olio extravergine d'oliva"),
-                        recipeSteps = listOf(
-                            "Tosta 40g di pane integrale.",
-                            "Disponi 50g di bresaola e 10g di scaglie di parmigiano sul pane tostato.",
+                            "Tosta 40g di pane casereccio.",
+                            "Disponi 50g di bresaola della Valtellina e 15g di scaglie di Parmigiano sul pane.",
                             "Condisci con 5g di olio extravergine d'oliva a crudo."
                         )
                     ),
                     MealOption(
-                        title = "Frullato Proteico alla Banana e Latte d'Avena",
-                        description = "Merenda rigenerante e saziante.",
+                        title = "Parmigiano Reggiano con Noci Italiane e Mela Fresca",
+                        description = "Spuntino genuino e saziante della tradizione nostra.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("200ml Latte d'avena", "120g Banana fresca", "20g Proteine in polvere", "10g Mandorle"),
+                        ingredients = listOf("30g Parmigiano Reggiano", "15g Noci italiane", "150g Mela fresca"),
                         recipeSteps = listOf(
-                            "Versa 200ml di latte d'avena nel mixer con 120g di banana, 20g di proteine ed 10g di mandorle.",
-                            "Frulla per 40 secondi fino ad ottenere uno smoothie cremoso e servi fresco."
+                            "Taglia 30g di Parmigiano Reggiano a scaglie.",
+                            "Servi con 150g di mela a fette e 15g di noci sgusciate."
                         )
                     )
                 ).shuffled()
                 snackPool.take(2)
             }
             MealType.LUNCH -> {
-                val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro integrale", "Riso Venere").shuffled().first()
-                val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Bresaola").shuffled().first()
-                val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori ciliegino", "Broccoli", "Asparagi").shuffled().first()
-
-                listOf(
+                val ItalianLunchPool = listOf(
                     MealOption(
-                        title = "$randomCarbs con $randomProtein e $randomVeg",
-                        description = "Nuova combinazione di pranzo bilanciata rigenerata per le tue preferenze.",
+                        title = "Pasta Integrale al Pomodoro Fresco e Basilico con Petto di Pollo",
+                        description = "Primo piatto iconico della tradizione italiana con proteine magre.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("80g $randomCarbs", "160g $randomProtein", "150g $randomVeg", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("80g Pasta integrale", "160g Petto di Pollo", "150g Pomodori pelati italiani", "10g Olio extravergine d'oliva", "10g Parmigiano Reggiano"),
                         recipeSteps = listOf(
-                            "Lessa 80g di $randomCarbs in acqua bollente salata.",
-                            "Cuoci 160g di $randomProtein con 150g di $randomVeg in padella con 10g di olio extravergine d'oliva per 8 minuti.",
-                            "Scola il $randomCarbs ed uniscilo alla spadellata di $randomProtein e $randomVeg prima di servire."
+                            "Lessa 80g di pasta integrale al dente in acqua salata.",
+                            "Cuoci 160g di pollo a straccetti con 150g di pomodoro ed 10g di olio EVO per 8 minuti.",
+                            "Salta la pasta in padella con il sugo e spolvera con 10g di Parmigiano Reggiano."
                         )
                     ),
                     MealOption(
-                        title = "Insalata calda di $randomCarbs, $randomProtein e $randomVeg",
-                        description = "Alternativa fresca e gustosa rigenerata per il pranzo.",
+                        title = "Risotto ai Funghi Porcini e Zucchine con Fesa di Tacchino",
+                        description = "Risotto tradizionale cremoso e saporito.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("75g $randomCarbs", "150g $randomProtein", "120g $randomVeg", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("80g Riso Carnaroli", "150g Fesa di Tacchino", "100g Funghi porcini", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Cuoci 75g di $randomCarbs al dente.",
-                            "Griglia 150g di $randomProtein su piastra per 4 minuti per lato.",
-                            "Mescola $randomCarbs, $randomProtein a pezzi e 120g di $randomVeg in una ciotola e condisci con 10g di olio extravergine d'oliva a crudo."
+                            "Tosta 80g di riso Carnaroli con 10g di olio EVO ed 100g di funghi porcini.",
+                            "Porta a cottura con brodo vegetale caldo per 16 minuti.",
+                            "Unisci 150g di fesa di tacchino a dadini prima di servire ben caldo."
+                        )
+                    ),
+                    MealOption(
+                        title = "Gnocchi di Patate alla Sorrentina con Pomodoro, Basilico e Fiordilatte",
+                        description = "Tradizione campana pura e gustosa.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("150g Gnocchi di patate freschi", "120g Macinato magro di bovino", "150g Passata di pomodoro", "30g Mozzarella fiordilatte", "10g Olio extravergine d'oliva"),
+                        recipeSteps = listOf(
+                            "Cuoci 150g di gnocchi in acqua salata finché salgono a galla.",
+                            "Condisci con 150g di passata al pomodoro, 120g di macinato magro e 10g di olio EVO.",
+                            "Spolvera con 30g di fiordilatte a cubetti e passa in forno per 5 minuti."
                         )
                     )
-                )
+                ).shuffled()
+                ItalianLunchPool.take(2)
             }
             MealType.DINNER -> {
-                val mainProtein = if (likesSalmon) "Salmone Fresco al Cartoccio" else listOf("Filetto di Spigola", "Tagliata di Petto di Tacchino", "Omelette ai Funghi", "Merluzzo al Vapore").shuffled().first()
-                val mainSide = listOf("Patate al forno ed insalata", "Verdure grigliate e pane integrale", "Spinaci al vapore e pane di segale").shuffled().first()
-
-                listOf(
+                val ItalianDinnerPool = listOf(
                     MealOption(
-                        title = "$mainProtein con $mainSide",
-                        description = "Cena leggera e ad alta digeribilità rigenerata per te.",
+                        title = "Filetto di Orata al Cartoccio con Patate al Forno ed Insalata Mista",
+                        description = "Cena di pesce leggera e profumata al rosmarino.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("180g Fonte proteica ($mainProtein)", "150g Contorno ($mainSide)", "60g Pane integrale", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("180g Filetto di Orata", "120g Patate al forno", "150g Insalata mista", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Cuoci 180g di $mainProtein al forno o alla piastra con salvia e rosmarino.",
-                            "Prepara 150g di contorno ($mainSide) e condisci con 10g of olio extravergine d'oliva.",
-                            "Servi il $mainProtein accompagnato dalle verdure e 60g di pane integrale."
+                            "Inforna 180g di orata al cartoccio con 120g di patate a fette per 18 minuti a 180°C.",
+                            "Servi il pesce caldo accompagnando con 150g di insalata fresca condita con 10g di olio EVO."
                         )
                     ),
                     MealOption(
-                        title = "Omelette alle Erbe con Verdure Grigliate e Pane Integrale",
-                        description = "Cena rapida, calda e proteica.",
+                        title = "Scaloppine di Petto di Tacchino al Limone con Verdure Grigliate",
+                        description = "Secondo piatto classico e leggero della cucina italiana.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("120g Uova intere", "100ml Albumi d'uovo", "150g Melanzane e Zucchine grigliate", "50g Pane integrale", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("170g Petto di Tacchino", "Succo di 1 Limone", "150g Verdure grigliate", "60g Pane integrale", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Sbatti 120g di uova con 100ml di albumi e cuoci in padella con 5g di olio extravergine d'oliva.",
-                            "Griglia 150g di verdure e condisci con i restanti 5g di olio extravergine d'oliva.",
-                            "Servi l'omelette con verdure grigliate e 50g di pane integrale tostato."
+                            "Cuoci 170g di tacchino in padella con 5g di olio EVO ed il succo di 1 limone fresco.",
+                            "Accompagna con 150g di verdure grigliate condite con i restanti 5g di olio EVO e 60g di pane integrale."
+                        )
+                    ),
+                    MealOption(
+                        title = "Merluzzo alla Livornese con Pomodorini, Capperi, Olive e Pane Tostato",
+                        description = "Piatto tradizionale toscano saporito e salutare.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("180g Filetto di Merluzzo", "150g Pomodorini", "15g Olive nere", "5g Capperi", "60g Pane di grano duro", "10g Olio extravergine d'oliva"),
+                        recipeSteps = listOf(
+                            "Cuoci 180g di merluzzo in padella con 150g di pomodorini, 15g di olive, 5g di capperi e 10g di olio EVO per 12 minuti.",
+                            "Servi caldo con il suo intingolo e 60g di pane tostato."
                         )
                     )
-                )
+                ).shuffled()
+                ItalianDinnerPool.take(2)
             }
         }
     }
@@ -727,37 +743,37 @@ class GeminiApiService {
     private fun generateMockCustomMealOption(mealType: MealType, slotMacro: MacroTarget, userDesire: String): MealOption {
         val formattedTitle = userDesire.trim().replaceFirstChar { it.uppercase() }
         
-        val isSweet = mealType == MealType.BREAKFAST || formattedTitle.contains("pancake", ignoreCase = true) || formattedTitle.contains("caffè", ignoreCase = true) || formattedTitle.contains("latte", ignoreCase = true) || formattedTitle.contains("cornetto", ignoreCase = true) || formattedTitle.contains("cioccolato", ignoreCase = true) || formattedTitle.contains("yogurt", ignoreCase = true)
+        val isSweet = mealType == MealType.BREAKFAST || formattedTitle.contains("caffè", ignoreCase = true) || formattedTitle.contains("latte", ignoreCase = true) || formattedTitle.contains("ciambellone", ignoreCase = true) || formattedTitle.contains("crostata", ignoreCase = true) || formattedTitle.contains("yogurt", ignoreCase = true) || formattedTitle.contains("biscotti", ignoreCase = true)
 
         val customIngredients = if (isSweet) {
             listOf(
                 "120g Ingrediente principale per $formattedTitle",
-                "150ml Latte scremato o bevanda d'avena",
+                "150ml Latte scremato o spremuta d'arancia",
                 "15g Miele d'acacia o confettura"
             )
         } else {
             listOf(
                 "150g Ingrediente principale per $formattedTitle",
-                "120g Contorno di ortaggi a scelta",
+                "120g Contorno di ortaggi della tradizione italiana",
                 "10g Olio extravergine d'oliva"
             )
         }
 
         val customSteps = if (isSweet) {
             listOf(
-                "Prepara $formattedTitle utilizzando 120g di ingrediente principale e 150ml di latte/bevanda.",
-                "Cuoci o lavora a freddo a seconda del piatto e guarnisci con 15g di miele d'acacia o confettura."
+                "Prepara $formattedTitle utilizzando 120g di ingrediente principale della tradizione ed 150ml di latte/spremuta.",
+                "Servi accompagnando con 15g di miele d'acacia o confettura alla frutta."
             )
         } else {
             listOf(
-                "Prepara 150g di ingrediente principale per $formattedTitle ed impiatta con 120g di ortaggi.",
+                "Prepara 150g di ingrediente principale per $formattedTitle ed impiatta con 120g di ortaggi della cucina italiana.",
                 "Condisci il tutto con 10g di olio extravergine d'oliva a crudo prima di servire."
             )
         }
 
         return MealOption(
-            title = "$formattedTitle (Versione Bilanciata NutriAI)",
-            description = "Piatto creato su tua richiesta specifica, dosato per rientrare perfettamente nel tuo target nutrizionale di ${mealType.label}.",
+            title = "$formattedTitle (Versione Bilanciata Tradizione Italiana)",
+            description = "Piatto della tradizione creato su tua richiesta specifica, dosato per rientrare perfettamente nel tuo target nutrizionale di ${mealType.label}.",
             calories = slotMacro.calories,
             proteinGrams = slotMacro.proteinGrams,
             carbsGrams = slotMacro.carbsGrams,
