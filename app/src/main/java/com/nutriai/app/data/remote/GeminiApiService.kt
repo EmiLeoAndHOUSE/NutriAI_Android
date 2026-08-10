@@ -40,7 +40,7 @@ class GeminiApiService {
     private val dayNames = listOf("Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica")
 
     /**
-     * Genera l'intero piano settimanale (7 giorni) tramite Gemini API o Mock dinamico offline.
+     * Genera l'intero piano settimanale (7 giorni) tramite Gemini API o Engine tradizionali della cucina italiana.
      */
     suspend fun generateWeeklyPlan(
         profile: UserProfile,
@@ -107,7 +107,7 @@ class GeminiApiService {
         val allergiesStr = if (profile.allergies.isNotEmpty()) profile.allergies.joinToString(", ") else "Nessuna"
 
         return """
-            Sei un nutrizionista ed uno chef professionista di cucina italiana. Genera un PIANO ALIMENTARE SETTIMANALE COMPLETO (da Lunedì a Domenica, 7 giorni) in formato JSON.
+            Sei un esperto chef di alta cucina tradizionale italiana ed un nutrizionista clinico. Genera un PIANO ALIMENTARE SETTIMANALE COMPLETO (da Lunedì a Domenica, 7 giorni) in formato JSON.
             PARAMETRI UTENTE:
             - Calorie Target Giornaliere: ${target.calories} kcal
             - Proteine Target: ${target.proteinGrams}g
@@ -115,18 +115,24 @@ class GeminiApiService {
             - Grassi Target: ${target.fatGrams}g
             - Stile Alimentare: ${profile.dietaryType.label}
             - ALLERGIE/INTOLLERANZE (RIGOROSAMENTE VIETATE): $allergiesStr
-            - CIBI GRADITI (USA RIGOROSAMENTE QUESTI ALIMENTI): $likedStr
+            - CIBI GRADITI SELEZIONATI DALL'UTENTE (USA RIGOROSAMENTE QUESTI INGREDIENTI): $likedStr
             - CIBI SGRADITI (DA ESCLUDERE TASSATIVAMENTE): $dislikedStr
             - Pasti richiesti per giorno: ${profile.activeMealTypes.joinToString { it.name }}
 
-            REGOLE TASSATIVE SULLE QUANTITÀ E SULLA COERENZA:
-            1. OGNI SINGOLO INGREDIENTE NELLA LISTA "ingredients" DEVE AVERE LA QUANTITÀ ESATTA ESPRESSA IN GRAMMI (g) O MILLILITRI (ml) (es. "150g Petto di pollo", "80g Pasta integrale", "10g Olio extravergine d'oliva", "150ml Latte scremato", "15g Mandorle"). È VIETATO USARE TERMINI SENZA DOSI COME "q.b.", "dose calibrata", "1 cucchiaio", "condimento a scelta".
-            2. LA PREPARAZIONE ("recipeSteps") DEVE ESSERE RIGOROSAMENTE INERENTE AL PIATTO E AGLI INGREDIENTI PROPOSTI.
-            3. VIETATO METTERE OLIO EVO O CONDIMENTI SALATI IN BEVANDE O DOLCI (MAI OLIO EVO NEL CAFFÈ, NEL LATTE, NEL PORRIDGE DOLCE O NEI PANCAKE!).
-            4. COLAZIONE (BREAKFAST): Solo piatti dolci o salati da colazione italiana (Porridge, Pancake, Toast con ricotta o uova, Yogurt greco con frutta/miele, Fette biscottate). MAI PASTA, RISO SALATO, CARNE O PESCE A COLAZIONE!
-            5. SPUNTINI (MORNING_SNACK / AFTERNOON_SNACK): Solo spuntini spezza-fame sani italiani (Yogurt greco, frutta fresca, tostino con affettato magro, parmigiano).
-            6. PRANZO (LUNCH): Primi piatti o piatti unici bilanciati.
-            7. CENA (DINNER): Secondi piatti proteici con contorno di verdure e porzione moderata di carboidrati.
+            REGOLE FONDAMENTALI SULLA TRADIZIONE ITALIANA AUTENTICA:
+            1. COLAZIONE (BREAKFAST): Usa UNICAMENTE COLAZIONI TRADIZIONALI ITALIANE AUTENTICHE!
+               - Cappuccino schiumato con Fette biscottate integrali, Burro di centrifuga e Marmellata/Miele
+               - Caffellatte con Biscotti integrali da inzuppo e Spremuta d'arancia fresca
+               - Ciambellone casereccio allo yogurt o Torta Margherita/Crostata casereccia alla frutta
+               - Pane di grano duro tostato con Ricotta magra e Miele d'acacia
+               - Yogurt bianco/greco con Muesli croccante integrale e Fragole o Mela
+               - Toast salato con Prosciutto cotto di alta qualità e Mozzarella fiordilatte
+               * DIVIETO ASSOLUTO: È TASSATIVAMENTE VIETATO PROPORRE PORRIDGE DI AVENA O PANCAKE ANGLOSASSONI A COLAZIONE!
+            2. SPUNTINI (MORNING_SNACK / AFTERNOON_SNACK): Solo spuntini spezza-fame sani italiani (Yogurt greco, frutta fresca, tostino con affettato magro, parmigiano).
+            3. PRANZO (LUNCH): Primi piatti tradizionali o piatti unici (Pasta al pomodoro e basilico, Riso Basmati/Venere con pollo/tacchino, Gnocchi di patate al pomodoro e mozzarella, Farro con verdure e tonno, Polenta morbida con ragù magro).
+            4. CENA (DINNER): Secondi piatti della cucina italiana (Filetto di Spigola/Orata al cartoccio, Scaloppine al limone, Tagliata di pollo o tacchino, Omelette alle erbe) con abbondante contorno di verdure e pane integrale/patate al forno.
+            5. OGNI SINGOLO INGREDIENTE NELLA LISTA "ingredients" DEVE AVERE IL PESO ESATTO IN GRAMMI (g) O MILLILITRI (ml) (es. "150g Petto di pollo", "80g Pasta integrale", "10g Olio extravergine d'oliva", "150ml Latte scremato"). MAI USARE TERMINI SENZA DOSI COME "q.b.", "dose calibrata", "1 cucchiaio".
+            6. NESSUN CONDIMENTO INCOERENTE (MAI olio EVO nel caffè, latte o colazioni dolci!).
 
             REQUISITI FORMATO RISPOSTA JSON:
             Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
@@ -145,8 +151,8 @@ class GeminiApiService {
                           "proteinGrams": 25,
                           "carbsGrams": 45,
                           "fatGrams": 12,
-                          "ingredients": ["60g Fiocchi d'avena", "150ml Latte scremato", "80g Mirtilli freschi", "10g Miele"],
-                          "recipeSteps": ["Scalda l'avena nel latte per 5 minuti.", "Servi con mirtilli e miele."]
+                          "ingredients": ["40g Fette biscottate integrali", "200ml Latte scremato", "50ml Caffè espresso", "15g Marmellata di fragole", "10g Burro di centrifuga"],
+                          "recipeSteps": ["Monta il latte con il caffè per il cappuccino.", "Spalmo il burro e la marmellata sulle fette biscottate."]
                         }
                       ]
                     }
@@ -160,14 +166,14 @@ class GeminiApiService {
     private fun buildSingleSlotPrompt(profile: UserProfile, slotTarget: MacroTarget, mealType: MealType): String {
         val randomSeed = Random.nextInt(1000, 9999)
         val mealSpecificInstruction = when (mealType) {
-            MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi alimenti da COLAZIONE italiana (Porridge, Pancake, Toast con ricotta o uova, Yogurt greco con frutta fresca/secca, Fette biscottate e marmellata, Cappuccino/latte vegetale). NON PROPORRE MAI PIATTI DA PRANZO/CENA (Tassativamente vietati gnocchi, pasta, riso salato, carne, pesce a colazione!)."
+            MealType.BREAKFAST -> "QUESTO PASTO È LA COLAZIONE. Proponi alimenti da COLAZIONE TRADIZIONALE ITALIANA AUTENTICA (Cappuccino, Caffellatte, Fette biscottate con marmellata/miele, Biscotti integrali da inzuppo, Ciambellone casereccio allo yogurt, Crostata alla confettura, Toast prosciutto cotto e mozzarella). TASSATIVAMENTE VIETATI porridge anglosassone, pancake americani, gnocchi, pasta, riso salato, carne o pesce a colazione!"
             MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> "QUESTO PASTO È UNO SPUNTINO. Proponi unicamente spuntini spezza-fame italiani sani e veloci (Yogurt greco con mandorle/noci e frutto, tostino con affettato magro, parmigiano con frutto, frullato proteico). NON PROPORRE PIATTI DA PRANZO/CENA."
-            MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi un primo piatto bilanciato o piatto unico della cucina italiana (Riso, Pasta integrale, Farro, Gnocchi, Polenta conditi con fonti proteiche e verdure)."
+            MealType.LUNCH -> "QUESTO PASTO È IL PRANZO. Proponi un primo piatto bilanciato o piatto unico della cucina italiana (Riso, Pasta integrale, Farro, Gnocchi, Polenta conditi con fonti proteiche magre e verdure)."
             MealType.DINNER -> "QUESTO PASTO È LA CENA. Proponi un secondo piatto proteico della cucina italiana (pesce, carne magra, uova) accompagnato da verdure ed una fonte moderata di carboidrati (pane integrale, patate al forno)."
         }
 
         return """
-            Genera 2 NUOVE ED INEDITI alternative (Seed: $randomSeed) per il pasto: ${mealType.label} (${mealType.name}).
+            Genera 2 NUOVE ED INEDITI alternative tradizionali della cucina italiana (Seed: $randomSeed) per il pasto: ${mealType.label} (${mealType.name}).
             $mealSpecificInstruction
 
             REGOLE TASSATIVE:
@@ -209,7 +215,7 @@ class GeminiApiService {
                 "proteinGrams": ${slotTarget.proteinGrams},
                 "carbsGrams": ${slotTarget.carbsGrams},
                 "fatGrams": ${slotTarget.fatGrams},
-                "ingredients": ["120g Farina d'avena", "150ml Albumi", "15g Miele"],
+                "ingredients": ["120g Pane di grano duro", "50g Prosciutto cotto", "150ml Spremuta d'arancia"],
                 "recipeSteps": ["Step 1 di preparazione coerente", "Step 2 di cottura coerente"]
               }
             ]
@@ -357,7 +363,7 @@ class GeminiApiService {
         return s.trim()
     }
 
-    // --- GENERATORE DI MOCK SETTIMANALE ED OFFERTA PASTI SPECIFICA PER IL MOMENTO DELLA GIORNATA ---
+    // --- GENERATORE DI MOCK SETTIMANALE ED OFFERTA PASTI 100% CUCINA TRADIZIONALE ITALIANA ---
 
     private fun generateMockWeeklyPlan(profile: UserProfile, target: MacroTarget): WeeklyMealPlan {
         val cal = Calendar.getInstance()
@@ -405,36 +411,55 @@ class GeminiApiService {
         val likesSalmon = profile.likedFoods.any { it.contains("Salmone", ignoreCase = true) }
 
         return when (mealType) {
-            MealType.BREAKFAST -> listOf(
-                MealOption(
-                    title = if (dayIndex % 2 == 0) "Porridge caldo d'Avena con Mirtilli e Mandorle" else "Pancake Proteici alla Banana e Cacao Magro",
-                    description = "Colazione energetica e saziante della tradizione italiana.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("60g Fiocchi d'avena", "150ml Latte scremato", "80g Mirtilli freschi", "15g Mandorle tritate", "10g Miele d'acacia"),
-                    recipeSteps = listOf(
-                        "Versa 60g di fiocchi d'avena e 150ml di latte scremato in un pentolino.",
-                        "Scalda a fuoco lento per 5 minuti mescolando fino ad ottenere una consistenza cremosa.",
-                        "Versa in una tazza e guarnisci con 80g di mirtilli freschi, 15g di mandorle tritate e 10g di miele a filo."
-                    )
-                ),
-                MealOption(
-                    title = "Toast Integrale con Ricotta Magra e Miele d'Acacia",
-                    description = "Colazione dolce soffice e veloce da preparare.",
-                    calories = slotMacro.calories,
-                    proteinGrams = slotMacro.proteinGrams,
-                    carbsGrams = slotMacro.carbsGrams,
-                    fatGrams = slotMacro.fatGrams,
-                    ingredients = listOf("60g Pane integrale tostato", "80g Ricotta magra", "15g Miele d'acacia", "150ml Spremuta d'arancia fresca"),
-                    recipeSteps = listOf(
-                        "Tosta 60g di pane integrale in tostapane per 2 minuti.",
-                        "Spalmo 80g di ricotta magra sulla fetta di pane calda.",
-                        "Completa con 15g di miele d'acacia a filo ed accompagna con 150ml di spremuta fresca d'arancia."
+            MealType.BREAKFAST -> {
+                val authenticItalianBreakfasts = listOf(
+                    MealOption(
+                        title = "Cappuccino Schiumato con Fette Biscottate Integrali, Burro e Marmellata",
+                        description = "La classica ed inimitabile colazione della tradizione italiana.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("200ml Latte scremato o d'avena", "50ml Caffè espresso", "40g Fette biscottate integrali", "10g Burro di centrifuga", "15g Confettura di albicocche"),
+                        recipeSteps = listOf(
+                            "Prepara 50ml di caffè espresso e monta 200ml di latte fino ad ottenere una schiuma soffice per il cappuccino.",
+                            "Spalmo 10g di burro di centrifuga e 15g di confettura sulle 40g di fette biscottate integrali.",
+                            "Servi il cappuccino ben caldo insieme alle fette biscottate."
+                        )
+                    ),
+                    MealOption(
+                        title = "Caffellatte con Biscotti Integrali da Inzuppo e Spremuta",
+                        description = "Colazione casereccia italiana ricca di energia e vitamina C.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("200ml Latte scremato", "50ml Caffè espresso", "45g Biscotti integrali ai cereali", "150ml Spremuta d'arancia fresca"),
+                        recipeSteps = listOf(
+                            "Scalda 200ml di latte ed unisci 50ml di caffè espresso in una tazza capiente.",
+                            "Premi 150ml di spremuta d'arancia fresca.",
+                            "Inzuppa 45g di biscotti integrali nel caffellatte caldo ed accompagna con la spremuta fresca."
+                        )
+                    ),
+                    MealOption(
+                        title = "Ciambellone Casereccio allo Yogurt e Cappuccino",
+                        description = "Dolce soffice preparato con ingredienti sani e genuini.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("60g Ciambellone casereccio allo yogurt", "200ml Latte parzialmente scremato", "50ml Caffè espresso", "100g Mela fresca"),
+                        recipeSteps = listOf(
+                            "Taglia una fetta da 60g di ciambellone casereccio allo yogurt.",
+                            "Monta 200ml di latte con 50ml di caffè per un classico cappuccino italiano.",
+                            "Servi con 100g di mela fresca a fettine."
+                        )
+                    ),
+                    MealOption(
+                        title = "Toast Salato con Prosciutto Cotto, Mozzarella e Spremuta d'Arancia",
+                        description = "Colazione salata della tradizione italiana.",
+                        calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
+                        ingredients = listOf("50g Pane di grano duro tostato", "40g Prosciutto cotto di alta qualità", "30g Mozzarella fiordilatte", "150ml Spremuta d'arancia fresca"),
+                        recipeSteps = listOf(
+                            "Tosta 50g di pane ed imbottisci con 40g di prosciutto cotto e 30g di mozzarella.",
+                            "Scalda nel tostapane per 2 minuti finché la mozzarella fonda.",
+                            "Accompagna con 150ml di spremuta fresca d'arancia."
+                        )
                     )
                 )
-            )
+                authenticItalianBreakfasts.subList(dayIndex % 2, (dayIndex % 2) + 2)
+            }
             MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> listOf(
                 MealOption(
                     title = "Yogurt Greco 0% con Mandorle e Mela",
@@ -473,8 +498,8 @@ class GeminiApiService {
 
                 listOf(
                     MealOption(
-                        title = "$dayCarb con $dayProtein e Zucchine",
-                        description = "Pranzo completo ed equilibrato secondo le tue preferenze.",
+                        title = "$dayCarb al Pomodoro Fresco con $dayProtein e Zucchine",
+                        description = "Pranzo completo ed equilibrato della cucina tradizionale italiana.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
@@ -488,18 +513,18 @@ class GeminiApiService {
                         )
                     ),
                     MealOption(
-                        title = "Bowl di Quinoa con Fesa di Tacchino e Pomodorini",
+                        title = "Insalata Fredda di Farro con Fesa di Tacchino e Pomodorini",
                         description = "Alternativa fresca e ricca di nutrienti per il pranzo.",
                         calories = slotMacro.calories,
                         proteinGrams = slotMacro.proteinGrams,
                         carbsGrams = slotMacro.carbsGrams,
                         fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("70g Quinoa integrale", "150g Fesa di Tacchino", "120g Pomodorini ciliegino", "10g Olio extravergine d'oliva"),
+                        ingredients = listOf("70g Farro integrale", "150g Fesa di Tacchino", "120g Pomodorini ciliegino", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
-                            "Sciacqua 70g di quinoa e cuocila in abbondante acqua per 15 minuti, poi scola e lascia intiepidire.",
+                            "Cuoci 70g di farro in abbondante acqua salata per 15 minuti, poi scola e lascia intiepidire.",
                             "Griglia 150g di fesa di tacchino su una piastra per 3 minuti per lato e tagliala a listarelle.",
-                            "In una bowl unisci la quinoa, il tacchino ed 120g di pomodorini tagliati a metà.",
-                            "Condisci con 10g di olio extravergine d'oliva a crudo ed erbe aromatiche."
+                            "In una ciotola unisci il farro, il tacchino ed 120g di pomodorini tagliati a metà.",
+                            "Condisci con 10g di olio extravergine d'oliva a crudo ed origano."
                         )
                     )
                 )
@@ -553,51 +578,53 @@ class GeminiApiService {
 
         return when (mealType) {
             MealType.BREAKFAST -> {
-                val breakfastPool = listOf(
+                val authenticItalianBreakfastPool = listOf(
                     MealOption(
-                        title = "Porridge caldo d'Avena con Mirtilli e Mandorle",
-                        description = "Nuova combinazione da colazione ricca di fibre e grassi sani.",
+                        title = "Cappuccino Schiumato con Fette Biscottate Integrali e Confettura",
+                        description = "Colazione tradizionale italiana sana e bilanciata.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("60g Fiocchi d'avena", "150ml Latte scremato", "80g Mirtilli freschi", "15g Mandorle tritate", "10g Miele d'acacia"),
+                        ingredients = listOf("200ml Latte scremato", "50ml Caffè espresso", "40g Fette biscottate integrali", "10g Burro di centrifuga", "15g Confettura di ciliegie"),
                         recipeSteps = listOf(
-                            "Scalda 150ml di latte scremato con 60g di fiocchi d'avena per 5 minuti mescolando.",
-                            "Versa in una tazza e completa con 80g di mirtilli, 15g di mandorle tritate e 10g di miele."
+                            "Prepara 50ml di caffè espresso e monta 200ml di latte fino a formare la schiuma del cappuccino.",
+                            "Spalmo 10g di burro di centrifuga e 15g di confettura sulle fette biscottate integrali.",
+                            "Servi il cappuccino ben caldo insieme alle fette biscottate."
                         )
                     ),
                     MealOption(
-                        title = "Pancake Proteici al Cacao con Banana a Fette",
-                        description = "Colazione sfiziosa e proteica rigenerata per te.",
+                        title = "Caffellatte all'Italiana con Biscotti Integrali da Inzuppo",
+                        description = "La tipica colazione casereccia italiana.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("50g Farina d'avena", "100ml Albumi", "120g Banana fresca", "10g Cacao amaro", "10g Noci"),
+                        ingredients = listOf("200ml Latte scremato", "50ml Caffè espresso", "45g Biscotti integrali ai cereali", "150ml Spremuta d'arancia"),
                         recipeSteps = listOf(
-                            "Mescola 50g di farina d'avena, 100ml di albumi, 10g di cacao amaro ed 80g di banana schiacciata.",
-                            "Cuoci la pastella in padella antiaderente per 2 minuti per lato.",
-                            "Servi i pancake guarniti con i restanti 40g di banana a fette e 10g di noci tritate."
+                            "Scalda 200ml di latte ed unisci 50ml di caffè espresso in una tazza.",
+                            "Premi 150ml di spremuta fresca d'arancia.",
+                            "Inzuppa 45g di biscotti integrali nel caffellatte."
                         )
                     ),
                     MealOption(
-                        title = "Toast Integrale con Ricotta Magra e Miele d'Acacia",
-                        description = "Colazione dolce tradizionale e bilanciata.",
+                        title = "Ciambellone Casereccio allo Yogurt e Cappuccino",
+                        description = "Colazione dolce della tradizione fatta in casa.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("60g Pane integrale tostato", "80g Ricotta magra", "15g Miele d'acacia", "150ml Spremuta d'arancia"),
+                        ingredients = listOf("60g Ciambellone casereccio allo yogurt", "200ml Latte scremato", "50ml Caffè espresso", "100g Mela fresca"),
                         recipeSteps = listOf(
-                            "Tosta 60g di pane integrale in tostapane per 2 minuti.",
-                            "Spalmo 80g di ricotta magra sul pane tostato.",
-                            "Versa 15g di miele d'acacia a filo e servi con 150ml di spremuta fresca d'arancia."
+                            "Taglia una fetta da 60g di ciambellone allo yogurt.",
+                            "Prepara un cappuccino schiumato con 200ml di latte e 50ml di caffè.",
+                            "Servi il tutto accompagnando con 100g di mela fresca a fette."
                         )
                     ),
                     MealOption(
-                        title = "Coppetta di Yogurt Greco 0% con Cereali Integrali e Noci",
-                        description = "Colazione fresca e veloce ricca di probiotici.",
+                        title = "Toast Salato con Prosciutto Cotto e Mozzarella Fiordilatte",
+                        description = "Colazione salata tradizionale con spremuta fresca.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("170g Yogurt Greco 0%", "40g Cereali integrali d'avena", "15g Noci sgusciate", "120g Mela a cubetti"),
+                        ingredients = listOf("50g Pane di grano duro tostato", "40g Prosciutto cotto di alta qualità", "30g Mozzarella fiordilatte", "150ml Spremuta d'arancia"),
                         recipeSteps = listOf(
-                            "Versa 170g di yogurt greco 0% in una ciotola.",
-                            "Aggiungi 40g di cereali integrali, 120g di mela a cubetti e 15g di noci sgusciate tritate."
+                            "Tosta 50g di pane di grano duro ed imbottisci con 40g di prosciutto cotto e 30g di mozzarella.",
+                            "Scalda nel tostapane per 2 minuti finché la mozzarella fonde.",
+                            "Accompagna con 150ml di spremuta fresca d'arancia."
                         )
                     )
                 ).shuffled()
-                breakfastPool.take(2)
+                authenticItalianBreakfastPool.take(2)
             }
             MealType.MORNING_SNACK, MealType.AFTERNOON_SNACK -> {
                 val snackPool = listOf(
@@ -605,7 +632,7 @@ class GeminiApiService {
                         title = "Yogurt Greco 0% con Noci e Mela Croccante",
                         description = "Spuntino spezza-fame ad alto potere saziante.",
                         calories = slotMacro.calories, proteinGrams = slotMacro.proteinGrams, carbsGrams = slotMacro.carbsGrams, fatGrams = slotMacro.fatGrams,
-                        ingredients = listOf("170g Yogurt Greco 0%", "15g Noci sgusciate", "150g Mela fresca"),
+                        ingredients = listOf("170g Yogurt Greco 0%", "15g Noci", "150g Mela fresca"),
                         recipeSteps = listOf(
                             "Versa 170g di yogurt greco 0% in una ciotola.",
                             "Aggiungi 150g di mela fresca a cubetti e 15g di noci tritate."
@@ -637,7 +664,7 @@ class GeminiApiService {
             }
             MealType.LUNCH -> {
                 val randomCarbs = listOf("Pasta Integrale", "Riso Basmati", "Gnocchi di Patate", "Farro integrale", "Riso Venere").shuffled().first()
-                val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Ricotta magra").shuffled().first()
+                val randomProtein = listOf("Petto di Pollo", "Fesa di Tacchino", "Filetto di Orata", "Merluzzo", "Uova strapazzate", "Bresaola").shuffled().first()
                 val randomVeg = listOf("Zucchine", "Spinaci", "Pomodori ciliegino", "Broccoli", "Asparagi").shuffled().first()
 
                 listOf(
@@ -677,7 +704,7 @@ class GeminiApiService {
                         ingredients = listOf("180g Fonte proteica ($mainProtein)", "150g Contorno ($mainSide)", "60g Pane integrale", "10g Olio extravergine d'oliva"),
                         recipeSteps = listOf(
                             "Cuoci 180g di $mainProtein al forno o alla piastra con salvia e rosmarino.",
-                            "Prepara 150g di contorno ($mainSide) e condisci con 10g di olio extravergine d'oliva.",
+                            "Prepara 150g di contorno ($mainSide) e condisci con 10g of olio extravergine d'oliva.",
                             "Servi il $mainProtein accompagnato dalle verdure e 60g di pane integrale."
                         )
                     ),
@@ -706,7 +733,7 @@ class GeminiApiService {
             listOf(
                 "120g Ingrediente principale per $formattedTitle",
                 "150ml Latte scremato o bevanda d'avena",
-                "15g Miele d'acacia o frutti rossi"
+                "15g Miele d'acacia o confettura"
             )
         } else {
             listOf(
@@ -719,7 +746,7 @@ class GeminiApiService {
         val customSteps = if (isSweet) {
             listOf(
                 "Prepara $formattedTitle utilizzando 120g di ingrediente principale e 150ml di latte/bevanda.",
-                "Cuoci o lavora a freddo a seconda del piatto e guarnisci con 15g di miele o frutti rossi."
+                "Cuoci o lavora a freddo a seconda del piatto e guarnisci con 15g di miele d'acacia o confettura."
             )
         } else {
             listOf(

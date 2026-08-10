@@ -197,6 +197,38 @@ fun DashboardScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Banner informativo Gemini AI e Tradizione Italiana
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = EmeraldGreen.copy(alpha = 0.12f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenSettings() }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(22.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "100% Tradizione Italiana & Generazione AI 🇮🇹",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                    color = EmeraldGreen
+                                )
+                                Text(
+                                    text = "Colazioni tradizionali italiane (Cappuccino, Fette biscottate, Ciambellone, Biscotti integrali). Inserisci la tua API Key Gemini per sbloccare la ricerca live infinita!",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+
                     MacroHeaderCard(
                         target = macroTarget,
                         dayPlan = activeDay,
